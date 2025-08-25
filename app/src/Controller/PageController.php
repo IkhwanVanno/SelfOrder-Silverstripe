@@ -72,9 +72,26 @@ namespace {
         {
             return Security::getCurrentUser();
         }
+        
         protected function isLoggedIn()
         {
             return Security::getCurrentUser() !== null;
+        }
+        
+        // Method to get cart quantity for a specific product
+        public function getCartQuantity($produkID)
+        {
+            if (!$this->isLoggedIn()) {
+                return 0;
+            }
+            
+            $user = $this->getCurrentUser();
+            $cartItem = CartItem::get()->filter([
+                'MemberID' => $user->ID,
+                'ProdukID' => $produkID
+            ])->first();
+            
+            return $cartItem ? $cartItem->Kuantitas : 0;
         }
     }
 }

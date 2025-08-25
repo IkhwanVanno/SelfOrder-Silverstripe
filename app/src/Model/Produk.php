@@ -9,22 +9,29 @@ use SilverStripe\ORM\DataObject;
 class Produk extends DataObject
 {
     private static $table_name = 'Produk';
+    
     private static $db = [
         'Nama' => 'Varchar(255)',
         'Deskripsi' => 'Text',
         'Stok' => 'Int',
         'Harga' => 'Double',
         'Is_Active' => 'Boolean',
-
     ];
+    
     private static $has_one = [
         'Kategori' => KategoriProduk::class,
-        'CartItem' => CartItem::class,
         'Image' => Image::class,
     ];
+    
+    private static $has_many = [
+        'CartItems' => CartItem::class,
+        'OrderItems' => OrderItem::class,
+    ];
+    
     private static $owns = [
         'Image',
     ];
+    
     private static $summary_fields = [
         'Image.CMSThumbnail' => 'Gambar',
         'Kategori.Nama' => 'Kategori',
@@ -34,6 +41,7 @@ class Produk extends DataObject
         'Harga' => 'Harga',
         'Is_Active' => 'Aktif',
     ];
+    
     public function getCMSFields()
     {
         $fields = parent::getCMSFields();
