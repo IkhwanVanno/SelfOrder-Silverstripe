@@ -12,9 +12,15 @@ class Payment extends DataObject
         'MetodePembayaran' => 'Varchar(100)',
         'DuitkuTransactionID' => 'Varchar(255)',
     ];
-    private static $has_many = [
+    private static $has_one = [
         'Order' => Order::class,
     ];
     private static $summary_fields = [
+        'Reference' => 'Reference',
+        'Order.NomorInvoice' => 'Nomor Invoice',
+        'TotalHarga' => 'Total Harga',
+        'Status' => 'Status',
+        'MetodePembayaran' => 'Metode Pembayaran',
+        'DuitkuTransactionID' => 'Duitku Transaction ID',
     ];
 }

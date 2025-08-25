@@ -17,7 +17,7 @@ class Order extends DataObject
     ];
     private static $has_many = [
         'OrderItems' => OrderItem::class,
-        'Payment' => Payment::class,
+        'Payments' => Payment::class,
     ];
     private static $summary_fields = [
         'ID' => 'ID Order',

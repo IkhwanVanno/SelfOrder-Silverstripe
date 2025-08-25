@@ -9,7 +9,7 @@ class OrderItem extends DataObject
         'Kuantitas' => 'Int',
         'HargaSatuan' => 'Double',
     ];
-    private static $has_many = [
+    private static $has_one = [
         'Order' => Order::class,
         'Produk' => Produk::class,
     ];
@@ -19,4 +19,9 @@ class OrderItem extends DataObject
         'Kuantitas' => 'Kuantitas',
         'HargaSatuan' => 'Harga Satuan',
     ];
+    
+    public function getSubtotal()
+    {
+        return $this->Kuantitas * $this->HargaSatuan;
+    }
 }
