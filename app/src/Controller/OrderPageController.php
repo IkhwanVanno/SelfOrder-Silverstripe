@@ -12,6 +12,10 @@ class OrderPageController extends PageController
     public function index(HTTPRequest $request)
     {
         if (!$this->isLoggedIn()) {
+            $this->getRequest()->getSession()->set('FlashMessage', [
+                'Type' => 'primary',
+                'Message' => 'Silahkan login terlebih dahulu.',
+            ]);
             return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
         }
         $user = $this->getCurrentUser();

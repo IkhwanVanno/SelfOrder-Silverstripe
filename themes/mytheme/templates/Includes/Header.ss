@@ -68,6 +68,9 @@
                     </button>
                     <div class="dropdown-menu">
                         <% if $isLoggedIn %>
+                        <a class="dropdown-item" href="$BaseHref/Profil">
+                            <i class="fa-solid fa-user mr-2"></i>Profil
+                        </a>
                         <a class="dropdown-item" href="$BaseHref/Auth/logout">
                             <i class="fas fa-sign-out-alt mr-2"></i>Logout
                         </a>
