@@ -34,6 +34,18 @@ Change it, enhance it and most importantly enjoy it!
 		<div class="col-12 col-md-9 col-lg-10 p-4">
 			$Layout
 		</div>
+		<% if $FlashMessages %>
+			<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+			<div class="toast align-items-center text-white bg-$FlashMessages.Type border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+			<div class="d-flex">
+			<div class="toast-body">
+				$FlashMessages.Message
+			</div>
+			<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+			</div>
+			</div>
+			</div>
+		<% end_if %>
 	</div>
 </div>
 <% include Footer %>

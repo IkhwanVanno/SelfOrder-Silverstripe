@@ -5,6 +5,7 @@ namespace {
     use SilverStripe\CMS\Controllers\ContentController;
     use SilverStripe\Control\HTTPRequest;
     use SilverStripe\Security\Security;
+    use SilverStripe\View\ArrayData;
 
     /**
      * @template T of Page
@@ -44,13 +45,28 @@ namespace {
             ];
         }
 
+        // === Flash message handling ===
+        protected $flashMessages = null;
+
+        public function getFlashMessages()
+        {
+            return $this->flashMessages;
+        }
+
         protected function init()
         {
             parent::init();
-            // You can include any CSS or JS required by your project here.
-            // See: https://docs.silverstripe.org/en/developer_guides/templates/requirements/
+
+            $session = $this->getRequest()->getSession();
+            $flash = $session->get('FlashMessage');
+
+            if ($flash) {
+                $this->flashMessages = ArrayData::create($flash);
+                $session->clear('FlashMessage');
+            }
         }
 
+        // === HOME PAGE ===
         public function index(HTTPRequest $request)
         {
             $kategoriID = $request->getVar('Kategori');
@@ -67,30 +83,30 @@ namespace {
             return $this->customise($data)->renderWith(['Page', 'App']);
         }
 
-        // Authentication related methods can be added here as well
+        // === USER AUTHENTICATION HELPERS ===
         protected function getCurrentUser()
         {
             return Security::getCurrentUser();
         }
-        
+
         protected function isLoggedIn()
         {
             return Security::getCurrentUser() !== null;
         }
-        
-        // Method to get cart quantity for a specific product
+
+        // === CART HELPERS ===
         public function getCartQuantity($produkID)
         {
             if (!$this->isLoggedIn()) {
                 return 0;
             }
-            
+
             $user = $this->getCurrentUser();
             $cartItem = CartItem::get()->filter([
                 'MemberID' => $user->ID,
                 'ProdukID' => $produkID
             ])->first();
-            
+
             return $cartItem ? $cartItem->Kuantitas : 0;
         }
     }
