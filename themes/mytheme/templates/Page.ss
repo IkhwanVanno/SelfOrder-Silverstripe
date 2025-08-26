@@ -1,17 +1,5 @@
 <!DOCTYPE html>
-<!--
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-Simple. by Sara (saratusar.com, @saratusar) for Innovatif - an awesome Slovenia-based digital agency (innovatif.com/en)
-Change it, enhance it and most importantly enjoy it!
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--->
-
-<!--[if !IE]><!-->
 <html lang="$ContentLocale">
-<!--<![endif]-->
-<!--[if IE 6 ]><html lang="$ContentLocale" class="ie ie6"><![endif]-->
-<!--[if IE 7 ]><html lang="$ContentLocale" class="ie ie7"><![endif]-->
-<!--[if IE 8 ]><html lang="$ContentLocale" class="ie ie8"><![endif]-->
 <head>
 	<% base_tag %>
 	<title><% if $MetaTitle %>$MetaTitle<% else %>$Title<% end_if %> &raquo; $SiteConfig.Title</title>
@@ -20,34 +8,62 @@ Change it, enhance it and most importantly enjoy it!
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	$MetaTags(false)
 	<link rel="shortcut icon" href="$SiteConfig.Logo.URL" />
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+	<script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10375C',
+                        secondary: '#EB8317',
+                        accent: '#F3C623',
+                        light: '#F4F6FF'
+                    }
+                }
+            }
+        }
+    </script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
 <body class="$ClassName.ShortName<% if not $Menu(2) %> no-sidebar<% end_if %>" <% if $i18nScriptDirection %>dir="$i18nScriptDirection"<% end_if %>%>
-<% include Header %>
-<div class="container-fluid" role="main">
-	<div class="row min-vh-100">
-		<div class="col-12 col-md-3 col-lg-2 bg-light d-flex flex-column justify-content-between p-3">
-			<% include SideBar %>
-		</div>
-		<div class="col-12 col-md-9 col-lg-10 p-4">
-			$Layout
-		</div>
-		<% if $FlashMessages %>
-			<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
-			<div class="toast align-items-center text-white bg-$FlashMessages.Type border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
-			<div class="d-flex">
-			<div class="toast-body">
-				$FlashMessages.Message
-			</div>
-			<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-			</div>
-			</div>
-			</div>
-		<% end_if %>
-	</div>
-</div>
-<% include Footer %>
+  <% include Header %>
+
+  <!-- Wrapper Layout -->
+  <div class="flex flex-col md:flex-row min-h-screen" role="main">
+    
+    <!-- Sidebar -->
+    <div class="w-full md:w-1/4 lg:w-1/5 bg-accent text-black p-4">
+      <% include SideBar %>
+    </div>
+
+    <!-- Konten -->
+    <div class="flex-1 bg-light p-6">
+      $Layout
+    </div>
+
+    <!-- Flash Messages -->
+    <% if $FlashMessages %>
+      <div class="fixed top-4 right-4 z-50">
+        <div class="flex items-start gap-4 p-4 rounded-lg shadow-lg text-white
+          <% if $FlashMessages.Type == 'success' %> bg-green-600 
+          <% else_if $FlashMessages.Type == 'error' %> bg-red-600 
+          <% else_if $FlashMessages.Type == 'warning' %> bg-yellow-500 
+          <% else %> bg-gray-800 
+          <% end_if %>">
+          
+          <div class="flex-1">
+            $FlashMessages.Message
+          </div>
+
+          <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-300 text-xl leading-none font-bold">
+            &times;
+          </button>
+        </div>
+      </div>
+    <% end_if %>
+  </div>
+
+  <% include Footer %>
 </body>
 </html>

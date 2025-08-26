@@ -71,7 +71,7 @@ namespace {
         {
             $kategoriID = $request->getVar('Kategori');
 
-            $produk = Produk::get();
+            $produk = Produk::get()->filter('Is_Active', 1);
 
             if ($kategoriID) {
                 $produk = $produk->filter('KategoriID', $kategoriID);
