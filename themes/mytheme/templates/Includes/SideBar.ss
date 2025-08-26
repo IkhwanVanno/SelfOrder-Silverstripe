@@ -60,12 +60,18 @@
                 </div>
             </div>
             
-            <!-- Cart Button -->
-            <div class="mt-4">
+            <!-- Cart & Order Buttons -->
+            <div class="mt-4 flex gap-3">
                 <a href="$BaseHref/keranjang" 
-                   class="flex items-center justify-center w-full bg-primary text-white font-bold py-4 px-4 rounded-xl hover:bg-primary/90 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group">
+                class="flex items-center justify-center w-1/2 bg-primary text-white font-bold py-4 px-4 rounded-xl hover:bg-green-700 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group">
                     <i class="fas fa-shopping-cart mr-2 group-hover:scale-110 transition-transform duration-200"></i>
-                    <span>Keranjang Belanja</span>
+                    <span>Keranjang</span>
+                </a>
+
+                <a href="$BaseHref/order" 
+                class="flex items-center justify-center w-1/2 bg-primary text-white font-bold py-4 px-4 rounded-xl hover:bg-green-700 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group">
+                    <i class="fas fa-check-circle mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                    <span>Order</span>
                 </a>
             </div>
         </div>
