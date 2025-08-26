@@ -1,6 +1,14 @@
 <main class="container py-4">
 <h2 class="mb-4">Keranjang Anda</h2>
 
+<!-- Flash Messages -->
+<% if FlashMessages %>
+<div class="alert alert-{$FlashMessages.Type} alert-dismissible fade show" role="alert">
+    {$FlashMessages.Message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<% end_if %>
+
 <div id="cart-items">
 <% if CartItems %>
     <% loop CartItems %>
@@ -44,37 +52,93 @@
 <% else %>
     <div class="alert alert-info">
         <p>Keranjang Anda masih kosong.</p>
-        <a href="/" class="btn btn-primary">Mulai Belanja</a>
+        <a href="$BaseHref" class="btn btn-primary">Mulai Belanja</a>
     </div>
 <% end_if %>
 </div>
 
 <% if CartItems %>
-<!-- Total Harga -->
-<div class="text-end mt-4">
-    <h5>Total Harga: <span class="text-success">Rp {$TotalHarga}</span></h5>
-</div>
+<form method="post" action="$BaseHref/keranjang/process-checkout" id="checkoutForm">
+    <!-- Nomor Meja -->
+    <div class="mt-4">
+        <label for="nomorMeja" class="form-label">Nomor Meja <span class="text-danger">*</span></label>
+        <input type="number" class="form-control" id="nomorMeja" name="nomor_meja" placeholder="Masukkan nomor meja" required>
+    </div>
 
-<!-- Nomor Meja -->
-<div class="mt-4">
-    <label for="nomorMeja" class="form-label">Nomor Meja</label>
-    <input type="number" class="form-control" id="nomorMeja" placeholder="Masukkan nomor meja">
-</div>
+    <!-- Metode Pembayaran -->
+    <div class="mt-4">
+        <label for="metodePembayaran" class="form-label">Metode Pembayaran <span class="text-danger">*</span></label>
+        <select class="form-select" id="metodePembayaran" name="payment_method" required onchange="calculateTotal()">
+            <option value="">Pilih metode pembayaran</option>
+            <% if PaymentMethods %>
+                <% loop PaymentMethods %>
+                <option value="$paymentMethod" data-fee="$totalFee">
+                    $paymentName 
+                    <% if totalFee %>
+                        (Fee: Rp {$totalFee})
+                    <% end_if %>
+                </option>
+                <% end_loop %>
+            <% else %>
+                <option value="" disabled>Metode pembayaran tidak tersedia</option>
+            <% end_if %>
+        </select>
+        
+        <!-- Debug info - hapus setelah testing -->
+        <% if PaymentMethods %>
+        <small class="text-muted">Ditemukan {$PaymentMethods.Count} metode pembayaran</small>
+        <% else %>
+        <small class="text-danger">Tidak ada metode pembayaran yang tersedia</small>
+        <% end_if %>
+    </div>
 
-<!-- Metode Pembayaran -->
-<div class="mt-4">
-    <label for="metodePembayaran" class="form-label">Metode Pembayaran</label>
-    <select class="form-select" id="metodePembayaran">
-        <option selected>Pilih metode pembayaran</option>
-        <option value="cash">Tunai</option>
-        <option value="qris">QRIS</option>
-        <option value="debit">Debit</option>
-    </select>
-</div>
+    <!-- Ringkasan Pembayaran -->
+    <div class="mt-4 border rounded p-3 bg-light">
+        <h5>Ringkasan Pembayaran</h5>
+        <div class="d-flex justify-content-between">
+            <span>Total Belanja:</span>
+            <span id="subtotal">Rp {$TotalHarga}</span>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span>Biaya Admin:</span>
+            <span id="paymentFee">Rp 0</span>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between fw-bold">
+            <span>Total Pembayaran:</span>
+            <span id="totalPayment" class="text-success">Rp {$TotalHarga}</span>
+        </div>
+    </div>
 
-<!-- Tombol Checkout -->
-<div class="mt-4 text-end">
-    <button class="btn btn-primary">Lanjutkan Pembayaran</button>
-</div>
+    <!-- Tombol Checkout -->
+    <div class="mt-4 text-end">
+        <button type="submit" class="btn btn-primary btn-lg">Lanjutkan Pembayaran</button>
+    </div>
+</form>
 <% end_if %>
+
+<script>
+function calculateTotal() {
+    const subtotal = {$TotalHarga};
+    const paymentMethodSelect = document.getElementById('metodePembayaran');
+    const selectedOption = paymentMethodSelect.options[paymentMethodSelect.selectedIndex];
+    
+    let paymentFee = 0;
+    if (selectedOption && selectedOption.dataset.fee) {
+        paymentFee = parseInt(selectedOption.dataset.fee);
+    }
+    
+    const total = subtotal + paymentFee;
+    
+    document.getElementById('paymentFee').textContent = 'Rp ' + paymentFee.toLocaleString('id-ID');
+    document.getElementById('totalPayment').textContent = 'Rp ' + total.toLocaleString('id-ID');
+}
+
+// Format numbers on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const subtotal = {$TotalHarga};
+    document.getElementById('subtotal').textContent = 'Rp ' + subtotal.toLocaleString('id-ID');
+    document.getElementById('totalPayment').textContent = 'Rp ' + subtotal.toLocaleString('id-ID');
+});
+</script>
 </main>
