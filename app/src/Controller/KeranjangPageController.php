@@ -227,6 +227,8 @@ class KeranjangPageController extends PageController
         $order = Order::create();
         $order->MemberID = $user->ID;
         $order->TotalHarga = $totalAmount;
+        $order->TotalHargaBarang = $subtotal;
+        $order->PaymentFee = $paymentFee;
         $order->Status = 'Antrean';
         $order->NomorInvoice = 'INV-' . date('Ymd') . '-' . sprintf('%06d', rand(1, 999999));
         $order->NomorMeja = $nomorMeja;
@@ -254,7 +256,7 @@ class KeranjangPageController extends PageController
         $order->PaymentID = $payment->ID;
         $order->write();
 
-        $paymentUrl = $this->paymentService->createDuitkuPayment($payment, $paymentMethod, $totalAmount, $user);
+        $paymentUrl = $this->paymentService->createDuitkuPayment($payment, $paymentMethod, $subtotal, $user);
 
         if ($paymentUrl) {
             foreach ($cartItems as $cartItem) {

@@ -9,6 +9,8 @@ class Order extends DataObject
 
     private static $db = [
         'TotalHarga' => 'Double',
+        'TotalHargaBarang' => 'Double',
+        'PaymentFee' => 'Double',
         'Status' => "Enum('Antrean,Proses,Terkirim', 'Antrean')",
         'NomorInvoice' => 'Varchar(100)',
         'NomorMeja' => 'Varchar(10)',
@@ -30,6 +32,8 @@ class Order extends DataObject
         'NomorInvoice' => 'Nomor Invoice',
         'Member.Email' => 'Email Member',
         'TotalHarga' => 'Total Harga',
+        'TotalHargaBarang' => 'Total Harga Barang',
+        'PaymentFee' => 'Biaya Pembayaran',
         'Status' => 'Status',
         'Created' => 'Tanggal Order',
     ];

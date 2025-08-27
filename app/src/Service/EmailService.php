@@ -100,13 +100,8 @@ class EmailService
             $payment = Payment::get()->filter('OrderID', $order->ID)->first();
         }
 
-        $paymentFee = 0;
-        $paymentMethod = '';
-
-        if ($payment) {
-            $paymentFee = $order->TotalHarga - $subtotal;
-            $paymentMethod = $payment->MetodePembayaran;
-        }
+        $paymentFee = $order->PaymentFee;
+        $paymentMethod = $payment->MetodePembayaran ?? 'N/A';
 
         $invoiceDate = date('Y-m-d');
         if ($order->Created) {

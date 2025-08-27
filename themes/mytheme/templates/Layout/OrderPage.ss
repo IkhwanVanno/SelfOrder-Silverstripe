@@ -8,6 +8,8 @@
           <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">No. Meja</th>
           <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">No. Invoice</th>
           <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Total Harga</th>
+          <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Total Harga Barang</th>
+          <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Payment Fee</th>
           <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
           <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Tanggal Order</th>
           <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Aksi</th>
@@ -20,6 +22,8 @@
           <td class="px-4 py-3 text-gray-800 font-medium">$NomorMeja</td>
           <td class="px-4 py-3 text-gray-800">$NomorInvoice</td>
           <td class="px-4 py-3 text-gray-800">RP $TotalHarga</td>
+          <td class="px-4 py-3 text-gray-800">RP $TotalHargaBarang</td>
+          <td class="px-4 py-3 text-gray-800">RP $PaymentFee</td>
           <td class="px-4 py-3">
             <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
               $Status
