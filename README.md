@@ -50,13 +50,13 @@ MAILER_DSN=""
 RAJAONGKIR_API_KEY=5Z7hID5j0b16babf00e6b15fpTCLRrhB
 
 # API Duitku (Sandbox)
-DUITKU_MERCHANT_CODE=DS24403
-DUITKU_API_KEY=892422034401f38a8af78eee5524ec0a
-DUITKU_GETPAYMENTMETHOD_URL=https://sandbox.duitku.com/webapi/api/merchant/paymentmethod/getpaymentmethod
-DUITKU_BASE_URL=https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry
+DUITKU_MERCHANT_CODE=
+DUITKU_API_KEY=
+DUITKU_GETPAYMENTMETHOD_URL=
+DUITKU_BASE_URL=
 
 # Ngrok
-NGROK_URL=https://39e1beb94839.ngrok-free.app/MetroShoppingG
+NGROK_URL=https://ngrok_url/MetroShoppingG
 
 # Mixed Content Fix
 SS_TRUSTED_PROXY_IPS="*"
