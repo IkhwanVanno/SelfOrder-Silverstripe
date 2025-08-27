@@ -24,6 +24,12 @@
             }
         }
     </script>
+    <script>
+      setTimeout(() => {
+        const flash = document.querySelector('.fixed.top-4.right-4');
+        if (flash) flash.remove();
+      }, 5000);
+    </script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
 <body class="$ClassName.ShortName<% if not $Menu(2) %> no-sidebar<% end_if %>" <% if $i18nScriptDirection %>dir="$i18nScriptDirection"<% end_if %>%>

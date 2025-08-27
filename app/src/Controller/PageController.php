@@ -50,20 +50,20 @@ namespace {
 
         public function getFlashMessages()
         {
-            return $this->flashMessages;
+            $session = $this->getRequest()->getSession();
+            $flash = $session->get('FlashMessage');
+
+            if ($flash) {
+                $session->clear('FlashMessage');
+                return ArrayData::create($flash);
+            }
+
+            return null;
         }
 
         protected function init()
         {
             parent::init();
-
-            $session = $this->getRequest()->getSession();
-            $flash = $session->get('FlashMessage');
-
-            if ($flash) {
-                $this->flashMessages = ArrayData::create($flash);
-                $session->clear('FlashMessage');
-            }
         }
 
         // === HOME PAGE ===

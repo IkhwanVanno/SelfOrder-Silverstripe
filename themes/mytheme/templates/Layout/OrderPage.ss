@@ -26,19 +26,15 @@
             </span>
           </td>
           <td class="px-4 py-3 text-gray-700">$Created</td>
-          <td class="px-4 py-3">
-            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
-              $Status
-            </span>
-          </td>
-          <td class="px-4 py-3 text-gray-700">$Created</td>
-          <td class="px-4 py-3">
-            <a href="$BaseHref/Keranjang/downloadInvoice/$ID" class="inline-block bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs mr-2">
-              Download
-            </a>
-            <a href="$BaseHref/keranjang/sendInvoice/$ID" class="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs">
-              Send
-            </a>
+          <td class="px-4 py-3 gap-2 flex"> 
+              <a href="$BaseHref/Keranjang/downloadInvoice/$ID"
+                class="inline-block w-24 text-center bg-blue-500 hover:bg-blue-600 text-white py-2 rounded text-sm mr-2">
+                  Download  
+              </a>
+              <a href="$BaseHref/keranjang/sendInvoice/$ID"
+                class="inline-block w-24 text-center bg-green-500 hover:bg-green-600 text-white py-2 rounded text-sm mr-2">
+                  Send
+              </a>
           </td>
         <% end_loop %>
         </tr>

@@ -363,7 +363,10 @@ class KeranjangPageController extends PageController
         $user = $order->Member();
         $siteConfig = SiteConfig::current_site_config();
         $pdfContent = $this->emailService->generateInvoicePDF($order, $user, $siteConfig);
-
+        $this->getRequest()->getSession()->set('FlashMessage', [
+            'Type' => 'success',
+            'Message' => 'Invoice berhasil diunduh.'
+        ]);
         return HTTPResponse::create($pdfContent)
             ->addHeader('Content-Type', 'application/pdf')
             ->addHeader('Content-Disposition', 'attachment; filename="Invoice-' . $order->NomorInvoice . '.pdf"');
@@ -379,6 +382,10 @@ class KeranjangPageController extends PageController
         }
 
         $this->emailService->sendInvoiceEmail($order);
+        $this->getRequest()->getSession()->set('FlashMessage', [
+            'Type' => 'success',
+            'Message' => 'Email invoice telah dikirim. Silakan periksa kotak Email anda.'
+        ]);
         return $this->redirectBack();
     }
 

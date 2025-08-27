@@ -30,7 +30,7 @@
 <div class="sidebar-content lg:block" id="sidebarContent">
     <div class="bg-accent rounded-lg shadow-lg border border-accent/20 overflow-hidden">
         <!-- Header -->
-        <div class="bg-secondary text-center py-4">
+        <div class="bg-secondary text-center py-4 hidden lg:block">
             <h6 class="text-white font-bold text-lg">
                 <i class="fas fa-list mr-2"></i>Kategori Produk
             </h6>
