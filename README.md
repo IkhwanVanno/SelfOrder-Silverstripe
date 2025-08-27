@@ -1,10 +1,9 @@
-# 🛍️ Metro Shopping (Silverstripe CMS)
+# 🛍️ Self Order (Silverstripe CMS)
 
-Proyek ini adalah platform e-commerce sederhana yang dibangun menggunakan Silverstripe CMS dan terintegrasi dengan API seperti RajaOngkir dan Duitku.
+Proyek ini adalah platform e-commerce sederhana yang dibangun menggunakan Silverstripe CMS dan terintegrasi dengan API seperti Duitku.
 
 ## 🚀 Fitur Utama
 - Manajemen produk & kategori
-- Integrasi ongkir (RajaOngkir)
 - Pembayaran otomatis (Duitku Sandbox)
 - Dashboard admin (CMS)
 - Invoice PDF dan email
@@ -46,9 +45,6 @@ SS_DEFAULT_ADMIN_PASSWORD="password"
 # Mailer
 MAILER_DSN=""
 
-# API RajaOngkir
-RAJAONGKIR_API_KEY=5Z7hID5j0b16babf00e6b15fpTCLRrhB
-
 # API Duitku (Sandbox)
 DUITKU_MERCHANT_CODE=
 DUITKU_API_KEY=
@@ -74,6 +70,8 @@ SS_TRUSTED_PROXY_HOST_HEADER="X-Forwarded-Host"
 composer install
 composer update
 composer vendor-expose
+composer require dompdf/dompdf
+
 ```
 
 ---
@@ -126,7 +124,6 @@ Ganti `SS_BASE_URL` dan `NGROK_URL` di `.env` dengan URL yang dihasilkan Ngrok.
 ## 🛠️ Tools yang Digunakan
 
 - [Silverstripe CMS](https://www.silverstripe.org/)
-- [RajaOngkir API](https://rajaongkir.com/)
 - [Duitku Sandbox](https://docs.duitku.com/)
 - [Ngrok](https://ngrok.com/)
 
