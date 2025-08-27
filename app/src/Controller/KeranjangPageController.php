@@ -213,17 +213,17 @@ class KeranjangPageController extends PageController
             return $this->redirectBack();
         }
 
-        // Calculate total
+        // Hitung subtotal dari item keranjang
         $subtotal = 0;
         foreach ($cartItems as $item) {
             $subtotal += $item->getSubtotal();
         }
 
-        // Get payment fee
+        // Hitung biaya tambahan metode pembayaran
         $paymentFee = $this->paymentService->getPaymentFee($paymentMethod, $subtotal);
         $totalAmount = $subtotal + $paymentFee;
 
-        // Create order
+        // Buat Order
         $order = Order::create();
         $order->MemberID = $user->ID;
         $order->TotalHarga = $totalAmount;
@@ -232,7 +232,7 @@ class KeranjangPageController extends PageController
         $order->NomorMeja = $nomorMeja;
         $order->write();
 
-        // Create order items
+        // Buat Order Items berdasarkan Cart Items
         foreach ($cartItems as $cartItem) {
             $orderItem = OrderItem::create();
             $orderItem->OrderID = $order->ID;
@@ -242,7 +242,7 @@ class KeranjangPageController extends PageController
             $orderItem->write();
         }
 
-        // Create payment
+        // Buat Payment
         $payment = Payment::create();
         $payment->OrderID = $order->ID;
         $payment->Reference = 'PAY-' . $order->NomorInvoice;
@@ -250,6 +250,9 @@ class KeranjangPageController extends PageController
         $payment->Status = 'Pending';
         $payment->MetodePembayaran = $paymentMethod;
         $payment->write();
+
+        $order->PaymentID = $payment->ID;
+        $order->write();
 
         $paymentUrl = $this->paymentService->createDuitkuPayment($payment, $paymentMethod, $totalAmount, $user);
 
@@ -360,7 +363,7 @@ class KeranjangPageController extends PageController
         $user = $order->Member();
         $siteConfig = SiteConfig::current_site_config();
         $pdfContent = $this->emailService->generateInvoicePDF($order, $user, $siteConfig);
-        
+
         return HTTPResponse::create($pdfContent)
             ->addHeader('Content-Type', 'application/pdf')
             ->addHeader('Content-Disposition', 'attachment; filename="Invoice-' . $order->NomorInvoice . '.pdf"');
