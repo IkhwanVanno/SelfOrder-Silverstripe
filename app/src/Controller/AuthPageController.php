@@ -37,22 +37,23 @@ class AuthPageController extends PageController
     // === Authentication ===
     public function Login(HTTPRequest $request)
     {
-        $result = null;
+        $validationResult = null;
 
         if ($request->isPOST()) {
-            $result = $this->AuthService->handleLogin($request);
+            $validationResult = $this->AuthService->handleLogin($request);
 
-            if ($result->isValid()) {
+            if ($validationResult->isValid()) {
                 $this->getRequest()->getSession()->set('FlashMessage', [
                     'Type' => 'primary',
                     'Message' => 'Selamat datang kembali!'
                 ]);
                 return $this->redirect(Director::absoluteBaseURL());
             } else {
-                $this->flashMessages = ArrayData::create([
+                $this->getRequest()->getSession()->set('FlashMessage', [
                     'Type' => 'danger',
-                    'Message' => $result->getMessages()[0]['message'] ?? 'Login gagal.'
+                    'Message' => $validationResult->getMessages()[0]['message'] ?? 'Login gagal.'
                 ]);
+                return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
             }
         }
 
@@ -68,22 +69,23 @@ class AuthPageController extends PageController
 
     public function Register(HTTPRequest $request)
     {
-        $result = null;
+        $validationResult = null;
 
         if ($request->isPOST()) {
-            $result = $this->AuthService->handleRegister($request);
+            $validationResult = $this->AuthService->handleRegister($request);
 
-            if ($result->isValid()) {
+            if ($validationResult->isValid()) {
                 $this->getRequest()->getSession()->set('FlashMessage', [
                     'Type' => 'success',
                     'Message' => 'Registrasi berhasil! Silakan login.'
                 ]);
                 return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
             } else {
-                $this->flashMessages = ArrayData::create([
+                $this->getRequest()->getSession()->set('FlashMessage', [
                     'Type' => 'danger',
-                    'Message' => $result->getMessages()[0]['message'] ?? 'Registrasi gagal.'
+                    'Message' => $validationResult->getMessages()[0]['message'] ?? 'Register gagal.'
                 ]);
+                return $this->redirect($this->Link('/auth/register'));
             }
         }
 
@@ -111,7 +113,7 @@ class AuthPageController extends PageController
     public function forgotPassword(HTTPRequest $request)
     {
         $validationResult = null;
-        
+
         if ($request->isPOST()) {
             $validationResult = $this->AuthService->processForgotPassword($request);
 
@@ -124,11 +126,11 @@ class AuthPageController extends PageController
             } else {
                 $errorMessages = $validationResult ? $validationResult->getMessages() : [];
                 $errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
-                
+
                 if (!empty($errorMessages)) {
                     $errorMessage = $errorMessages[0]['message'] ?? $errorMessage;
                 }
-                
+
                 $this->flashMessages = ArrayData::create([
                     'Type' => 'danger',
                     'Message' => $errorMessage
@@ -149,7 +151,7 @@ class AuthPageController extends PageController
     {
         $token = $request->getVar('token');
         $validationResult = null;
-        
+
         if (!$token) {
             $this->getRequest()->getSession()->set('FlashMessage', [
                 'Type' => 'danger',
@@ -178,11 +180,11 @@ class AuthPageController extends PageController
             } else {
                 $errorMessages = $validationResult ? $validationResult->getMessages() : [];
                 $errorMessage = 'Gagal mengatur ulang kata sandi. Silakan coba lagi.';
-                
+
                 if (!empty($errorMessages)) {
                     $errorMessage = $errorMessages[0]['message'] ?? $errorMessage;
                 }
-                
+
                 $this->flashMessages = ArrayData::create([
                     'Type' => 'danger',
                     'Message' => $errorMessage

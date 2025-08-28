@@ -1,9 +1,9 @@
-<footer class="mt-auto shadow-lg bg-gradient-to-br from-primary to-secondary" role="contentinfo">
-    <div class="container mx-auto px-4">
-        <div class="flex justify-center items-center py-6 md:py-8">
+<footer class="mt-auto shadow-lg bg-primary" role="contentinfo">
+    <div class="container mx-auto px-2">
+        <div class="flex justify-center items-center py-2 md:py-4">
             <!-- Main Content -->
             <div class="text-center w-full max-w-4xl">
-                <div class="mb-4">
+                <div class="mb-2">
                     <h6 class="text-white font-bold mb-2 text-lg md:text-xl">
                         <i class="fas fa-utensils mr-2"></i>$SiteConfig.Title
                     </h6>
