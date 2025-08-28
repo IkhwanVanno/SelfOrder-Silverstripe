@@ -78,7 +78,7 @@ class KeranjangPageController extends PageController
             $session->clear('FlashMessage');
         }
 
-        $data = array_merge($this->getCommontData(), [
+        $data = array_merge($this->getCommonData(), [
             'CartItems' => $cartItems,
             'TotalHarga' => $totalHarga,
             'PaymentMethods' => $paymentMethodsList,

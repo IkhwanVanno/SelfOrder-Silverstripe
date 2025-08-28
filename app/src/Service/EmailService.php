@@ -23,7 +23,6 @@ class EmailService
         $companyEmail = $siteConfig->Email;
 
         if (!$companyEmail) {
-            error_log("Company email not configured");
             return false;
         }
 

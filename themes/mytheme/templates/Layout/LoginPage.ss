@@ -73,6 +73,13 @@
                             Daftar di sini
                         </a>
                     </p>
+                    <p class="text-primary">
+                        Lupa kata sandi? 
+                        <a href="$BaseHref/auth/forgotpassword" 
+                           class="font-semibold text-secondary hover:text-secondary/80 transition-colors duration-200">
+                            Atur ulang di sini
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>

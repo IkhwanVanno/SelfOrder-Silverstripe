@@ -32,7 +32,7 @@ namespace {
             'index',
         ];
 
-        protected function getCommontData()
+        protected function getCommonData()
         {
             return [
                 'SiteConfig' => $this->SiteConfig,
@@ -77,7 +77,7 @@ namespace {
                 $produk = $produk->filter('KategoriID', $kategoriID);
             }
 
-            $data = $this->getCommontData();
+            $data = $this->getCommonData();
             $data['Produk'] = $produk;
 
             return $this->customise($data)->renderWith(['Page', 'App']);

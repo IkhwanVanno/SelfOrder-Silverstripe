@@ -29,7 +29,7 @@ class ProfilPageController extends PageController
         $flash = $session->get('FlashMessage');
         $session->clear('FlashMessage');
 
-        $data = array_merge($this->getCommontData(), [
+        $data = array_merge($this->getCommonData(), [
             'ProfilData' => $profilData,
             'FlashMessage' => $flash ? ArrayData::create($flash) : null,
         ]);

@@ -20,7 +20,7 @@ class OrderPageController extends PageController
         }
         $user = $this->getCurrentUser();
         $orderList = Order::get()->filter('MemberID', $user->ID)->sort('Created', 'DESC');
-        $data = array_merge($this->getCommontData(), [
+        $data = array_merge($this->getCommonData(), [
             'OrderList' => $orderList,
         ]);
         return $this->customise($data)->renderWith(['OrderPage', 'Page']);

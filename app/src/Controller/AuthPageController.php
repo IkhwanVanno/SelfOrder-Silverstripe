@@ -3,11 +3,8 @@
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
-use SilverStripe\Security\MemberAuthenticator\LoginHandler;
-use SilverStripe\Security\MemberAuthenticator\MemberAuthenticator;
 use SilverStripe\Security\Security;
 use SilverStripe\View\ArrayData;
 
@@ -17,21 +14,33 @@ class AuthPageController extends PageController
         'Login',
         'Register',
         'Logout',
+        'forgotPassword',
+        'resetPassword',
     ];
 
     private static $url_handlers = [
         'login' => 'Login',
         'register' => 'Register',
         'logout' => 'Logout',
+        'forgotpassword' => 'forgotPassword',
+        'resetpassword' => 'resetPassword',
     ];
 
-    // === LOGIN PAGE ===
+    private $AuthService;
+
+    protected function init()
+    {
+        parent::init();
+        $this->AuthService = new AuthService();
+    }
+
+    // === Authentication ===
     public function Login(HTTPRequest $request)
     {
         $result = null;
 
         if ($request->isPOST()) {
-            $result = $this->handleLogin($request);
+            $result = $this->AuthService->handleLogin($request);
 
             if ($result->isValid()) {
                 $this->getRequest()->getSession()->set('FlashMessage', [
@@ -47,29 +56,29 @@ class AuthPageController extends PageController
             }
         }
 
-        $data = array_merge($this->getCommontData(), [
+        $data = array_merge($this->getCommonData(), [
             'Title' => 'Login',
             'isLoggedIn' => $this->isLoggedIn(),
             'Member' => $this->getCurrentUser(),
+            'FlashMessages' => $this->getFlashMessages(),
         ]);
 
         return $this->customise($data)->renderWith(['LoginPage', 'Page']);
     }
 
-    // === REGISTER PAGE ===
     public function Register(HTTPRequest $request)
     {
         $result = null;
 
         if ($request->isPOST()) {
-            $result = $this->handleRegister($request);
+            $result = $this->AuthService->handleRegister($request);
 
             if ($result->isValid()) {
                 $this->getRequest()->getSession()->set('FlashMessage', [
                     'Type' => 'success',
                     'Message' => 'Registrasi berhasil! Silakan login.'
                 ]);
-                return $this->redirect(Director::absoluteBaseURL());
+                return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
             } else {
                 $this->flashMessages = ArrayData::create([
                     'Type' => 'danger',
@@ -78,16 +87,16 @@ class AuthPageController extends PageController
             }
         }
 
-        $data = array_merge($this->getCommontData(), [
+        $data = array_merge($this->getCommonData(), [
             'Title' => 'Register',
             'isLoggedIn' => $this->isLoggedIn(),
             'Member' => $this->getCurrentUser(),
+            'FlashMessages' => $this->getFlashMessages(),
         ]);
 
         return $this->customise($data)->renderWith(['RegisterPage', 'Page']);
     }
 
-    // === LOGOUT ===
     public function Logout(HTTPRequest $request)
     {
         Injector::inst()->get(IdentityStore::class)->logOut($request);
@@ -98,73 +107,97 @@ class AuthPageController extends PageController
         return $this->redirect(Director::absoluteBaseURL());
     }
 
-    // === PROSES LOGIN ===
-    private function handleLogin(HTTPRequest $request)
+    // === Reset Password ===
+    public function forgotPassword(HTTPRequest $request)
     {
-        $email = $request->postVar('login_email');
-        $password = $request->postVar('login_password');
-        $remember = $request->postVar('login_remember');
+        $validationResult = null;
+        
+        if ($request->isPOST()) {
+            $validationResult = $this->AuthService->processForgotPassword($request);
 
-        $data = [
-            'Email' => $email,
-            'Password' => $password,
-            'Remember' => $remember
-        ];
-
-        $authenticator = new MemberAuthenticator();
-        $loginHandler = new LoginHandler('auth', $authenticator);
-
-        $validationResult = ValidationResult::create();
-        $member = $loginHandler->checkLogin($data, $request, $validationResult);
-
-        $result = ValidationResult::create();
-
-        if ($member) {
-            if (!$member->inGroup('site-users')) {
-                Injector::inst()->get(IdentityStore::class)->logOut($request);
-                $result->addError('Anda tidak memiliki izin untuk masuk.');
+            if ($validationResult && $validationResult->isValid()) {
+                $this->getRequest()->getSession()->set('FlashMessage', [
+                    'Type' => 'success',
+                    'Message' => 'Link atur ulang kata sandi telah dikirim ke email Anda.'
+                ]);
+                return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
             } else {
-                $loginHandler->performLogin($member, $data, $request);
+                $errorMessages = $validationResult ? $validationResult->getMessages() : [];
+                $errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+                
+                if (!empty($errorMessages)) {
+                    $errorMessage = $errorMessages[0]['message'] ?? $errorMessage;
+                }
+                
+                $this->flashMessages = ArrayData::create([
+                    'Type' => 'danger',
+                    'Message' => $errorMessage
+                ]);
             }
-        } else {
-            $result->addError('Email atau password salah.');
         }
 
-        return $result;
+        $data = array_merge($this->getCommonData(), [
+            'Title' => 'Lupa Sandi',
+            'ValidationResult' => $validationResult,
+            'FlashMessages' => $this->getFlashMessages() ?: $this->flashMessages,
+        ]);
+
+        return $this->customise($data)->renderWith(['ForgotPasswordPage', 'Page']);
     }
 
-    // === PROSES REGISTER ===
-    private function handleRegister(HTTPRequest $request)
+    public function resetPassword(HTTPRequest $request)
     {
-        $firstName = $request->postVar('register_first_name');
-        $lastName = $request->postVar('register_last_name');
-        $email = $request->postVar('register_email');
-        $password1 = $request->postVar('register_password_1');
-        $password2 = $request->postVar('register_password_2');
-
-        $result = ValidationResult::create();
-
-        if ($password1 !== $password2) {
-            $result->addError('Password tidak cocok.');
-            return $result;
+        $token = $request->getVar('token');
+        $validationResult = null;
+        
+        if (!$token) {
+            $this->getRequest()->getSession()->set('FlashMessage', [
+                'Type' => 'danger',
+                'Message' => 'Token reset password tidak ditemukan.'
+            ]);
+            return $this->redirect(Director::absoluteBaseURL() . '/auth/forgotpassword');
         }
 
-        if (Member::get()->filter('Email', $email)->exists()) {
-            $result->addError('Email sudah terdaftar.');
-            return $result;
+        $user = Member::get()->filter('ResetPasswordToken', $token)->first();
+        if (!$user || !$user->ResetPasswordExpiry || strtotime($user->ResetPasswordExpiry) < time()) {
+            $this->getRequest()->getSession()->set('FlashMessage', [
+                'Type' => 'danger',
+                'Message' => 'Tautan atur ulang kata sandi tidak valid atau sudah kedaluwarsa.'
+            ]);
+            return $this->redirect(Director::absoluteBaseURL() . '/auth/forgotpassword');
         }
 
-        $member = Member::create();
-        $member->FirstName = $firstName;
-        $member->Surname = $lastName;
-        $member->Email = $email;
-        $member->write();
-        $member->addToGroupByCode('site-users');
-        $member->changePassword($password1);
+        if ($request->isPOST()) {
+            $validationResult = $this->AuthService->processResetPassword($request, $user);
+            if ($validationResult && $validationResult->isValid()) {
+                $this->getRequest()->getSession()->set('FlashMessage', [
+                    'Type' => 'success',
+                    'Message' => 'Kata sandi berhasil diatur ulang. Silakan login kembali.'
+                ]);
+                return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
+            } else {
+                $errorMessages = $validationResult ? $validationResult->getMessages() : [];
+                $errorMessage = 'Gagal mengatur ulang kata sandi. Silakan coba lagi.';
+                
+                if (!empty($errorMessages)) {
+                    $errorMessage = $errorMessages[0]['message'] ?? $errorMessage;
+                }
+                
+                $this->flashMessages = ArrayData::create([
+                    'Type' => 'danger',
+                    'Message' => $errorMessage
+                ]);
+            }
+        }
 
-        $result->addMessage('Pendaftaran berhasil.');
+        $data = array_merge($this->getCommonData(), [
+            'Title' => 'Reset Sandi',
+            'Token' => $token,
+            'ValidationResult' => $validationResult,
+            'FlashMessages' => $this->getFlashMessages() ?: $this->flashMessages,
+        ]);
 
-        return $result;
+        return $this->customise($data)->renderWith(['ResetPasswordPage', 'Page']);
     }
 
     // === COMMON HELPERS ===
