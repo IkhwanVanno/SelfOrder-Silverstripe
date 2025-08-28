@@ -15,10 +15,10 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#8AA624',
-                        secondary: '#FEA405',
-                        accent: '#DBE4C9',
-                        light: '#FFFFF0'
+                        primary: '#474444ff',
+                        secondary: '#8E8B82',
+                        accent: '#E9DCBE',
+                        light: '#F3F3F3'
                     }
                 }
             }
