@@ -11,7 +11,7 @@ class Order extends DataObject
         'TotalHarga' => 'Double',
         'TotalHargaBarang' => 'Double',
         'PaymentFee' => 'Double',
-        'Status' => "Enum('Antrean,Proses,Terkirim', 'Antrean')",
+        'Status' => "Enum('MenungguPembayaran,Dibatalkan,Antrean,Proses,Terkirim', 'Antrean')",
         'NomorInvoice' => 'Varchar(100)',
         'NomorMeja' => 'Varchar(10)',
         'Created' => 'Datetime',
@@ -30,11 +30,11 @@ class Order extends DataObject
         'ID' => 'ID Order',
         'NomorMeja' => 'Nomor Meja',
         'NomorInvoice' => 'Nomor Invoice',
+        'Status' => 'Status',
         'Member.Email' => 'Email Member',
         'TotalHarga' => 'Total Harga',
         'TotalHargaBarang' => 'Total Harga Barang',
         'PaymentFee' => 'Biaya Pembayaran',
-        'Status' => 'Status',
         'Created' => 'Tanggal Order',
     ];
 

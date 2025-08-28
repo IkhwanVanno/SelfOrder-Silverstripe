@@ -42,6 +42,7 @@ class KeranjangPageController extends PageController
         parent::init();
         $this->paymentService = new PaymentService();
         $this->emailService = new EmailService();
+        $this->paymentService->checkExpiredPayments();
     }
 
     public function index(HTTPRequest $request)
@@ -229,7 +230,7 @@ class KeranjangPageController extends PageController
         $order->TotalHarga = $totalAmount;
         $order->TotalHargaBarang = $subtotal;
         $order->PaymentFee = $paymentFee;
-        $order->Status = 'Antrean';
+        $order->Status = 'MenungguPembayaran';
         $order->NomorInvoice = 'INV-' . date('Ymd') . '-' . sprintf('%06d', rand(1, 999999));
         $order->NomorMeja = $nomorMeja;
         $order->write();
@@ -297,6 +298,11 @@ class KeranjangPageController extends PageController
                 } else {
                     $payment->Status = 'Failed';
                     $payment->write();
+                    $order = $payment->Order();
+                    if ($order) {
+                        $order->Status = 'Dibatalkan';
+                        $order->write();
+                    }
                     $this->setFlashMessage('error', 'Pembayaran gagal atau dibatalkan.');
                 }
             } else {
@@ -347,6 +353,11 @@ class KeranjangPageController extends PageController
             } else {
                 $payment->Status = 'Failed';
                 $payment->write();
+                $order = $payment->Order();
+                if ($order) {
+                    $order->Status = 'Dibatalkan';
+                    $order->write();
+                }
             }
         }
 

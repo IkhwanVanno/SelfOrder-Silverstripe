@@ -184,9 +184,9 @@
           <% loop $OrderItems %>
           <tr>
             <td>$Produk.Nama</td>
-            <td class="text-right currency">Rp {$HargaSatuan.Number}</td>
+            <td class="text-right currency">Rp {$HargaSatuan}</td>
             <td class="text-right">$Kuantitas</td>
-            <td class="text-right currency">Rp {$Subtotal.Number}</td>
+            <td class="text-right currency">Rp {$Subtotal}</td>
           </tr>
           <% end_loop %>
         </tbody>

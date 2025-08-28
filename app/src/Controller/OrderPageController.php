@@ -2,6 +2,7 @@
 
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\View\ArrayData;
 
 class OrderPageController extends PageController
 {
@@ -18,10 +19,22 @@ class OrderPageController extends PageController
             ]);
             return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
         }
+
+        $paymentService = new PaymentService();
+        $paymentService->checkExpiredPayments();
+
         $user = $this->getCurrentUser();
         $orderList = Order::get()->filter('MemberID', $user->ID)->sort('Created', 'DESC');
+
+        $session = $this->getRequest()->getSession();
+        $flashMessage = $session->get('FlashMessage');
+        if ($flashMessage) {
+            $session->clear('FlashMessage');
+        }
+
         $data = array_merge($this->getCommonData(), [
             'OrderList' => $orderList,
+            'FlashMessage' => $flashMessage ? new ArrayData($flashMessage) : null
         ]);
         return $this->customise($data)->renderWith(['OrderPage', 'Page']);
     }

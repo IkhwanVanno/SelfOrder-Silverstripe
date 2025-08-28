@@ -85,7 +85,7 @@ class PaymentService
         $baseUrl = rtrim(Director::absoluteBaseURL(), '/');
         $callbackUrl = $baseUrl . '/keranjang/callback';
         $returnUrl = $baseUrl . '/keranjang/return';
-        $expiryPeriod = 10;
+        $expiryPeriod = 10; // dalam menit
 
         $signature = md5($merchantCode . $merchantOrderId . $amount . $apiKey);
 
@@ -123,10 +123,35 @@ class PaymentService
         if ($response) {
             $result = json_decode($response, true);
             if (isset($result['paymentUrl'])) {
+                $payment->PaymentUrl = $result['paymentUrl'];
+                $payment->ExpiryTime = date('Y-m-d H:i:s', strtotime("+{$expiryPeriod} minutes"));
+                $payment->Status = 'Pending';
+                $payment->write();
+
                 return $result['paymentUrl'];
             }
         }
 
         return false;
+    }
+
+    // Tambahkan method baru untuk mengecek expired payments
+    public function checkExpiredPayments()
+    {
+        $expiredPayments = Payment::get()->filter([
+            'Status' => 'Pending',
+            'ExpiryTime:LessThan' => date('Y-m-d H:i:s')
+        ]);
+
+        foreach ($expiredPayments as $payment) {
+            $payment->Status = 'Failed';
+            $payment->write();
+
+            $order = $payment->Order();
+            if ($order) {
+                $order->Status = 'Dibatalkan';
+                $order->write();
+            }
+        }
     }
 }
