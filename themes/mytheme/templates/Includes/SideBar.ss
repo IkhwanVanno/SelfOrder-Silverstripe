@@ -43,7 +43,7 @@
                 <div class="space-y-3">
                     <% loop KategoriProduk %>
                     <a href="$BaseHref?Kategori=$ID" 
-                       class="flex items-center p-3 bg-secondary rounded-lg text-white hover:bg-secondary/90 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 group">
+                       class="flex items-center p-3 bg-secondary rounded-lg text-white hover:bg-secondary/85 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 group">
                         <div class="mr-3">
                             <img src="$Image.URL" 
                                  alt="$Nama" 

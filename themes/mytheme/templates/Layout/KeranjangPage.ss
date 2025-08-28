@@ -186,7 +186,7 @@
                             
                             <!-- Checkout Button -->
                             <div class="mt-6">
-                                <button type="submit" class="w-full bg-secondary text-white font-bold py-4 px-6 rounded-xl hover:bg-secondary/90 transition-all duration-200 hover:shadow-lg">
+                                <button type="submit" target="_blank" class="w-full bg-secondary text-white font-bold py-4 px-6 rounded-xl hover:bg-secondary/90 transition-all duration-200 hover:shadow-lg">
                                   <i class="fas fa-arrow-right mr-2"></i>Lanjutkan Pembayaran
                                 </button>
                             </div>
