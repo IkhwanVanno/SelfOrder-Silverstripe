@@ -18,7 +18,7 @@ class Payment extends DataObject
         'Updated' => 'Datetime',
     ];
 
-    private static $has_one = [
+    private static $belongs_to = [
         'Order' => Order::class,
     ];
 

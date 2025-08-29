@@ -27,14 +27,12 @@ class Order extends DataObject
     ];
 
     private static $summary_fields = [
-        'ID' => 'ID Order',
-        'NomorMeja' => 'Nomor Meja',
-        'NomorInvoice' => 'Nomor Invoice',
-        'Status' => 'Status',
-        'Member.Email' => 'Email Member',
+        'NomorMeja' => 'Meja',
+        'NomorInvoice' => 'Invoice',
+        'MemberName' => 'Nama Pemesan',
+        'ItemList' => 'Daftar Pesanan',
         'TotalHarga' => 'Total Harga',
-        'TotalHargaBarang' => 'Total Harga Barang',
-        'PaymentFee' => 'Biaya Pembayaran',
+        'Status' => 'Status',
         'Created' => 'Tanggal Order',
     ];
 
@@ -48,4 +46,24 @@ class Order extends DataObject
             $this->Created = date('Y-m-d H:i:s');
         }
     }
+
+    public function getMemberName()
+    {
+        return $this->Member()->FirstName . ' ' . $this->Member()->Surname;
+    }
+
+    public function getItemList()
+    {
+        $items = $this->OrderItems();
+        if ($items->count() === 0)
+            return '-';
+
+        $result = [];
+        foreach ($items as $item) {
+            $result[] = "{$item->Kuantitas}x {$item->Produk()->Nama}";
+        }
+
+        return implode(', ', $result);
+    }
+
 }
