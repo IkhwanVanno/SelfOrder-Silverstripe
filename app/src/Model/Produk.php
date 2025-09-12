@@ -14,7 +14,7 @@ class Produk extends DataObject
         'Nama' => 'Varchar(255)',
         'Deskripsi' => 'Text',
         'Harga' => 'Double',
-        'Is_Active' => 'Boolean',
+        'Status' => "Enum('Aktif,Nonaktif','Aktif')",
     ];
 
     private static $has_one = [
@@ -37,7 +37,7 @@ class Produk extends DataObject
         'Nama' => 'Nama',
         'Deskripsi' => 'Deskripsi',
         'Harga' => 'Harga',
-        'Is_Active' => 'Aktif',
+        'Status' => 'Status',
     ];
 
     public function getCMSFields()
@@ -48,7 +48,11 @@ class Produk extends DataObject
         $fields->addFieldToTab('Root.Main', TextField::create('Nama', 'Nama Produk'));
         $fields->addFieldToTab('Root.Main', TextField::create('Deskripsi', 'Deskripsi Produk'));
         $fields->addFieldToTab('Root.Main', TextField::create('Harga', 'Harga Produk'));
-        $fields->addFieldToTab('Root.Main', TextField::create('Is_Active', 'Status Produk (1=Aktif, 0=Nonaktif)'));
+        $fields->addFieldToTab('Root.Main', DropdownField::create(
+            'Status',
+            'Status Produk',
+            singleton(self::class)->dbObject('Status')->enumValues()
+        ));
         return $fields;
     }
 }
