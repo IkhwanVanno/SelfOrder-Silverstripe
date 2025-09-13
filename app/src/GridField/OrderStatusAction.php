@@ -19,9 +19,9 @@ class OrderStatusAction extends AbstractGridFieldComponent implements
     public function getActions($gridField)
     {
         return [
-            'setstatusMenungguPembayaran',
-            'setstatusDibatalkan',
-            'setstatusAntrean',
+            'setstatusmenunggupembayaran',
+            'setstatusdibatalkan',
+            'setstatusantrean',
             'setstatusproses',
             'setstatusterkirim',
         ];
@@ -61,27 +61,27 @@ class OrderStatusAction extends AbstractGridFieldComponent implements
         // MenungguPembayaran (biru muda)
         $btnMenunggu = GridField_FormAction::create(
             $gridField,
-            'setstatusMenungguPembayaran' . $record->ID,
+            'setstatusmenunggupembayaran' . $record->ID,
             'MenungguPembayaran',
-            'setstatusMenungguPembayaran',
+            'setstatusmenunggupembayaran',
             ['RecordID' => $record->ID]
         )->setAttribute('style', 'background-color: #17a2b8; color: white; padding: 5px 10px; border-radius: 4px;');
 
         // Dibatalkan (merah)
         $btnBatal = GridField_FormAction::create(
             $gridField,
-            'setstatusDibatalkan' . $record->ID,
+            'setstatusdibatalkan' . $record->ID,
             'Dibatalkan',
-            'setstatusDibatalkan',
+            'setstatusdibatalkan',
             ['RecordID' => $record->ID]
         )->setAttribute('style', 'background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 4px;');
 
         // Antrean (kuning)
         $btnAntrean = GridField_FormAction::create(
             $gridField,
-            'setstatusAntrean' . $record->ID,
+            'setstatusantrean' . $record->ID,
             'Antrean',
-            'setstatusAntrean',
+            'setstatusantrean',
             ['RecordID' => $record->ID]
         )->setAttribute('style', 'background-color: #ffc107; color: black; padding: 5px 10px; border-radius: 4px;');
 
@@ -129,15 +129,15 @@ class OrderStatusAction extends AbstractGridFieldComponent implements
         }
 
         switch (strtolower($actionName)) {
-            case 'setstatusMenungguPembayaran':
+            case 'setstatusmenunggupembayaran':
                 $order->Status = 'MenungguPembayaran';
                 $order->write();
                 break;
-            case 'setstatusDibatalkan':
+            case 'setstatusdibatalkan':
                 $order->Status = 'Dibatalkan';
                 $order->write();
                 break;
-            case 'setstatusAntrean':
+            case 'setstatusantrean':
                 $order->Status = 'Antrean';
                 $order->write();
                 break;
