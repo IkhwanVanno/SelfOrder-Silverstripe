@@ -348,7 +348,7 @@ class KeranjangPageController extends PageController
                 if ($order) {
                     $order->Status = 'Antrean';
                     $order->write();
-                    $this->emailService->sendInvoiceEmail($order);
+                    // $this->emailService->sendInvoiceEmail($order);
                 }
             } else {
                 $payment->Status = 'Failed';
