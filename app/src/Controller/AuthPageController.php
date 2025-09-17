@@ -85,7 +85,7 @@ class AuthPageController extends PageController
                     'Type' => 'danger',
                     'Message' => $validationResult->getMessages()[0]['message'] ?? 'Register gagal.'
                 ]);
-                return $this->redirect($this->Link('/auth/register'));
+                return $this->redirect(Director::absoluteBaseURL() . '/auth/register');
             }
         }
 
