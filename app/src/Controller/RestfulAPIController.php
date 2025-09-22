@@ -24,6 +24,7 @@ class RestfulAPIController extends Controller
 
       private static $allowed_actions = [
             'index',
+            'register',
             'login',
             'logout',
             'currentMemberr',
@@ -60,6 +61,7 @@ class RestfulAPIController extends Controller
                   'status' => 'Working',
                   'endpoints' => [
                         'GET /api/v1' => 'API information',
+                        'POST /api/v1/register' => 'User Register',
                         'POST /api/v1/login' => 'User login (email, password)',
                         'POST /api/v1/logout' => 'User logout',
                         'GET /api/v1/currentMemberr' => 'Get current user',
@@ -77,6 +79,37 @@ class RestfulAPIController extends Controller
       }
 
       // ============== AUTHENTICATION (FIXED) ==============
+      public function register(HTTPRequest $request)
+      {
+            if ($request->httpMethod() !== 'POST') {
+                  return $this->jsonResponse(['error' => 'Method not allowed'], 405);
+            }
+
+            $data = $this->getRequestData($request);
+
+            try {
+                  $member = Member::create();
+                  $member->FirstName = $data['FirstName'] ?? '';
+                  $member->Surname = $data['Surname'] ?? '';
+                  $member->Email = $data['Email'] ?? '';
+                  $member->changePassword($data['Password'] ?? '');
+
+                  $member->write();
+
+                  // Optional: Masukkan ke grup
+                  $member->addToGroupByCode('site-users');
+
+                  return $this->jsonResponse([
+                        'message' => 'Registration successful',
+                        'data' => $this->serializeMember($member)
+                  ], 201);
+            } catch (Exception $e) {
+                  return $this->jsonResponse([
+                        'error' => 'Registration failed',
+                        'details' => $e->getMessage()
+                  ], 500);
+            }
+      }
 
       public function login(HTTPRequest $request)
       {
@@ -280,7 +313,7 @@ class RestfulAPIController extends Controller
 
       public function member(HTTPRequest $request)
       {
-            return $this->handleModelCRUD('Member', $request);
+            return $this->handleModelCRUD(Member::class, $request);
       }
 
       public function produk(HTTPRequest $request)
@@ -317,6 +350,9 @@ class RestfulAPIController extends Controller
 
       protected function handleModelCRUD($modelClass, HTTPRequest $request)
       {
+            if ($modelClass === 'Member') {
+                  $modelClass = Member::class;
+            }
             if (!$this->isValidModel($modelClass)) {
                   return $this->jsonResponse(['error' => 'Invalid model'], 400);
             }
@@ -424,12 +460,21 @@ class RestfulAPIController extends Controller
                   if (!$object) {
                         return $this->jsonResponse(['error' => 'Record not found'], 404);
                   }
+                  if ($modelClass === 'Member') {
+                        $currentUser = Security::getCurrentUser();
+                        if (!$currentUser || $currentUser->ID != $id) {
+                              return $this->jsonResponse([
+                                    'error' => 'Unauthorized to view this profile'
+                              ], 403);
+                        }
+                  }
 
                   $serializedData = ($modelClass === 'Member') ?
                         $this->serializeMember($object) :
                         $this->serializeDataObject($object);
 
                   return $this->jsonResponse(['data' => $serializedData]);
+
             } catch (Exception $e) {
                   return $this->jsonResponse([
                         'error' => 'Failed to get record',
@@ -448,6 +493,14 @@ class RestfulAPIController extends Controller
 
                   if ($modelClass === 'Member' && isset($data['Password'])) {
                         $object->changePassword($data['Password']);
+                  }
+                  if (in_array($modelClass, ['Order', 'CartItem', 'Payment'])) {
+                        $currentUser = Security::getCurrentUser();
+                        if (!$currentUser) {
+                              return $this->jsonResponse(['error' => 'Not authenticated'], 401);
+                        }
+
+                        $object->MemberID = $currentUser->ID;
                   }
 
                   $object->write();
@@ -480,8 +533,26 @@ class RestfulAPIController extends Controller
             try {
                   $this->updateDataObjectFromData($object, $data);
 
-                  if ($modelClass === 'Member' && isset($data['Password']) && !empty($data['Password'])) {
-                        $object->changePassword($data['Password']);
+                  if ($modelClass === 'Member') {
+                        $currentUser = Security::getCurrentUser();
+                        if (!$currentUser || $currentUser->ID != $id) {
+                              return $this->jsonResponse([
+                                    'error' => 'Unauthorized to update this profile'
+                              ], 403);
+                        }
+
+                        if (isset($data['Password']) && !empty($data['Password'])) {
+                              $object->changePassword($data['Password']);
+                        }
+
+                        $allowedFields = ['FirstName', 'Surname', 'Email'];
+                        foreach ($data as $key => $value) {
+                              if (in_array($key, $allowedFields)) {
+                                    $object->$key = $value;
+                              }
+                        }
+                  } else {
+                        $this->updateDataObjectFromData($object, $data);
                   }
 
                   $object->write();
