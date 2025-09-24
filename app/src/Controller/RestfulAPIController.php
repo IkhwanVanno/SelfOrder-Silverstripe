@@ -36,6 +36,7 @@ class RestfulAPIController extends Controller
             'orderitem',
             'cartitem',
             'payment',
+            'paymentmethods'
       ];
 
       protected function init()
@@ -177,9 +178,6 @@ class RestfulAPIController extends Controller
             }
       }
 
-      /**
-       * Manual password verification as fallback
-       */
       private function verifyPassword($plainPassword, $member)
       {
             // Get the encrypted password from member
@@ -235,8 +233,6 @@ class RestfulAPIController extends Controller
             ]);
       }
 
-      // ============== SIMPLE USER CREATION FOR TESTING ==============
-
       public function createTestUser(HTTPRequest $request)
       {
             if ($request->httpMethod() !== 'POST') {
@@ -278,8 +274,7 @@ class RestfulAPIController extends Controller
             }
       }
 
-      // ============== SITECONFIG ==============
-
+      // =============== DATABASE ===============
       public function siteconfig(HTTPRequest $request)
       {
             $method = $request->httpMethod();
@@ -309,8 +304,6 @@ class RestfulAPIController extends Controller
             return $this->jsonResponse(['error' => 'Method not allowed'], 405);
       }
 
-      // ============== MODEL HANDLERS ==============
-
       public function member(HTTPRequest $request)
       {
             return $this->handleModelCRUD(Member::class, $request);
@@ -328,7 +321,37 @@ class RestfulAPIController extends Controller
 
       public function order(HTTPRequest $request)
       {
-            return $this->handleModelCRUD('Order', $request);
+            $method = $request->httpMethod();
+            $id = $this->extractIdFromRequest($request);
+
+            switch ($method) {
+                  case 'GET':
+                        if ($id) {
+                              return $this->getRecord('Order', $id);
+                        } else {
+                              return $this->listRecords('Order', $request);
+                        }
+
+                  case 'POST':
+                        if (!$id) {
+                              return $this->createOrderWithPayment($request);
+                        }
+                        break;
+
+                  case 'PUT':
+                        if ($id) {
+                              return $this->updateRecord('Order', $id, $request);
+                        }
+                        break;
+
+                  case 'DELETE':
+                        if ($id) {
+                              return $this->deleteRecord('Order', $id);
+                        }
+                        break;
+            }
+
+            return $this->jsonResponse(['error' => 'Method not allowed or invalid request'], 405);
       }
 
       public function orderitem(HTTPRequest $request)
@@ -344,6 +367,198 @@ class RestfulAPIController extends Controller
       public function payment(HTTPRequest $request)
       {
             return $this->handleModelCRUD('Payment', $request);
+      }
+
+      public function paymentmethods(HTTPRequest $request)
+      {
+            if ($request->httpMethod() !== 'POST') {
+                  return $this->jsonResponse(['error' => 'Method not allowed. Use GET.'], 405);
+            }
+
+            $data = json_decode($request->getBody(), true);
+            $amount = $data['amount'];
+
+            if (!$amount || !is_numeric($amount)) {
+                  return $this->jsonResponse(['error' => 'Valid amount parameter required'], 400);
+            }
+
+            try {
+                  $paymentService = new PaymentService();
+                  $paymentMethods = $paymentService->getPaymentMethods((int) $amount);
+
+                  if (empty($paymentMethods)) {
+                        return $this->jsonResponse([
+                              'error' => 'No payment methods available',
+                              'data' => []
+                        ], 200);
+                  }
+
+                  // Transform the payment methods for Flutter consumption
+                  $formattedMethods = [];
+                  foreach ($paymentMethods as $method) {
+                        $formattedMethods[] = [
+                              'paymentMethod' => $method['paymentMethod'],
+                              'paymentName' => $method['paymentName'],
+                              'paymentImage' => $method['paymentImage'] ?? '',
+                              'totalFee' => $method['totalFee'] ?? 0,
+                              'paymentGroup' => $method['paymentGroup'] ?? 'other'
+                        ];
+                  }
+
+                  return $this->jsonResponse([
+                        'success' => true,
+                        'data' => $formattedMethods,
+                        'count' => count($formattedMethods)
+                  ]);
+
+            } catch (Exception $e) {
+                  return $this->jsonResponse([
+                        'error' => 'Failed to fetch payment methods',
+                        'details' => $e->getMessage()
+                  ], 500);
+            }
+      }
+
+      protected function createOrderWithPayment(HTTPRequest $request)
+      {
+            if (!Security::getCurrentUser()) {
+                  return $this->jsonResponse(['error' => 'Authentication required'], 401);
+            }
+
+            $data = $this->getRequestData($request);
+            $currentUser = Security::getCurrentUser();
+
+            // Validate required fields
+            $requiredFields = ['NomorMeja', 'MetodePembayaran', 'Items'];
+            foreach ($requiredFields as $field) {
+                  if (!isset($data[$field]) || empty($data[$field])) {
+                        return $this->jsonResponse([
+                              'error' => "Field '$field' is required"
+                        ], 400);
+                  }
+            }
+
+            try {
+                  // Calculate totals from items
+                  $subtotal = 0;
+                  $orderItems = [];
+
+                  foreach ($data['Items'] as $itemData) {
+                        if (!isset($itemData['ProductID'], $itemData['Kuantitas'])) {
+                              return $this->jsonResponse([
+                                    'error' => 'Invalid item data - ProductID and Kuantitas required'
+                              ], 400);
+                        }
+
+                        $product = Produk::get()->byID($itemData['ProductID']);
+                        if (!$product) {
+                              return $this->jsonResponse([
+                                    'error' => "Product with ID {$itemData['ProductID']} not found"
+                              ], 400);
+                        }
+
+                        $quantity = (int) $itemData['Kuantitas'];
+                        $unitPrice = $product->Harga;
+                        $itemSubtotal = $unitPrice * $quantity;
+                        $subtotal += $itemSubtotal;
+
+                        $orderItems[] = [
+                              'ProductID' => $itemData['ProductID'],
+                              'Kuantitas' => $quantity,
+                              'HargaSatuan' => $unitPrice,
+                              'Product' => $product
+                        ];
+                  }
+
+                  // Get payment fee
+                  $paymentService = new PaymentService();
+                  $paymentFee = $paymentService->getPaymentFee($data['MetodePembayaran'], $subtotal);
+                  $totalAmount = $subtotal + $paymentFee;
+
+                  // Create Order
+                  $order = Order::create();
+                  $order->MemberID = $currentUser->ID;
+                  $order->TotalHarga = $totalAmount;
+                  $order->TotalHargaBarang = $subtotal;
+                  $order->PaymentFee = $paymentFee;
+                  $order->Status = 'MenungguPembayaran';
+                  $order->NomorInvoice = 'INV-' . date('Ymd') . '-' . sprintf('%06d', rand(1, 999999));
+                  $order->NomorMeja = $data['NomorMeja'];
+                  $order->write();
+
+                  // Create Order Items
+                  foreach ($orderItems as $itemData) {
+                        $orderItem = OrderItem::create();
+                        $orderItem->OrderID = $order->ID;
+                        $orderItem->ProdukID = $itemData['ProductID'];
+                        $orderItem->Kuantitas = $itemData['Kuantitas'];
+                        $orderItem->HargaSatuan = $itemData['HargaSatuan'];
+                        $orderItem->write();
+                  }
+
+                  // Create Payment
+                  $payment = Payment::create();
+                  $payment->OrderID = $order->ID;
+                  $payment->Reference = 'PAY-' . $order->NomorInvoice;
+                  $payment->TotalHarga = $totalAmount;
+                  $payment->Status = 'Pending';
+                  $payment->MetodePembayaran = $data['MetodePembayaran'];
+                  $payment->write();
+
+                  // Update order with payment ID
+                  $order->PaymentID = $payment->ID;
+                  $order->write();
+
+                  // Create Duitku payment and get payment URL
+                  $paymentUrl = $paymentService->createDuitkuPayment(
+                        $payment,
+                        $data['MetodePembayaran'],
+                        $subtotal, // Send subtotal to Duitku, not total (as per your existing logic)
+                        $currentUser
+                  );
+
+                  if (!$paymentUrl) {
+                        // If Duitku payment creation fails, update status
+                        $payment->Status = 'Failed';
+                        $payment->write();
+                        $order->Status = 'Dibatalkan';
+                        $order->write();
+
+                        return $this->jsonResponse([
+                              'error' => 'Failed to create payment with Duitku',
+                              'order_id' => $order->ID
+                        ], 500);
+                  }
+
+                  // Success response for Flutter
+                  return $this->jsonResponse([
+                        'success' => true,
+                        'message' => 'Order created successfully',
+                        'order' => [
+                              'ID' => $order->ID,
+                              'NomorInvoice' => $order->NomorInvoice,
+                              'TotalHarga' => $totalAmount,
+                              'TotalHargaBarang' => $subtotal,
+                              'PaymentFee' => $paymentFee,
+                              'Status' => $order->Status,
+                              'NomorMeja' => $order->NomorMeja,
+                              'payment_method' => $data['MetodePembayaran'],
+                              'payment_url' => $paymentUrl,
+                              'payment_reference' => $payment->Reference
+                        ]
+                  ], 201);
+
+            } catch (ValidationException $e) {
+                  return $this->jsonResponse([
+                        'error' => 'Validation failed',
+                        'details' => $e->getMessage()
+                  ], 400);
+            } catch (Exception $e) {
+                  return $this->jsonResponse([
+                        'error' => 'Order creation failed',
+                        'details' => $e->getMessage()
+                  ], 500);
+            }
       }
 
       // ============== GENERIC MODEL CRUD ==============
@@ -674,14 +889,25 @@ class RestfulAPIController extends Controller
                   try {
                         $relationObject = $object->$relationName();
                         if ($relationObject && $relationObject->exists()) {
-                              $data[$relationName] = [
-                                    'ID' => $relationObject->ID,
-                                    'Title' => method_exists($relationObject, 'getTitle') ? $relationObject->getTitle() : $relationObject->Name ?? $relationObject->ID,
-                                    'ClassName' => $relationObject->ClassName
-                              ];
+                              // Khusus untuk gambar
+                              if ($relationObject instanceof \SilverStripe\Assets\Image) {
+                                    if ($relationObject instanceof \SilverStripe\Assets\Image) {
+                                          $data[$relationName] = [
+                                                'ID' => $relationObject->ID,
+                                                'URL' => Director::absoluteURL($relationObject->getURL()),
+                                                'Filename' => $relationObject->Filename,
+                                                'Title' => $relationObject->Title,
+                                          ];
+                                    }
 
-                              if ($relationObject instanceof File) {
-                                    $data[$relationName]['URL'] = $relationObject->getAbsoluteURL();
+                              }
+                              // Khusus untuk Member
+                              else if ($relationObject instanceof Member) {
+                                    $data[$relationName] = $this->serializeMember($relationObject);
+                              }
+                              // Relasi biasa
+                              else {
+                                    $data[$relationName] = $this->serializeDataObject($relationObject);
                               }
                         } else {
                               $data[$relationName] = null;
@@ -690,6 +916,7 @@ class RestfulAPIController extends Controller
                         $data[$relationName] = null;
                   }
             }
+
 
             return $data;
       }
