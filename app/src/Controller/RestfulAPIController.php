@@ -73,6 +73,7 @@ class RestfulAPIController extends Controller
                         'CRUD /api/v1/order/{id}' => 'Order management',
                         'CRUD /api/v1/cartitem/{id}' => 'Cart management',
                         'CRUD /api/v1/payment/{id}' => 'Payment management',
+                        'POST /api/paymentmethods' => 'Get payment methods',
                   ],
                   'available_models' => $this->getAvailableModels(),
                   'note' => 'Use POST method for login with JSON: {"email":"user@example.com","password":"pass123"}'
