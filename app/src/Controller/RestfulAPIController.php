@@ -36,7 +36,9 @@ class RestfulAPIController extends Controller
             'orderitem',
             'cartitem',
             'payment',
-            'paymentmethods'
+            'paymentmethods',
+            'downloadInvoiceAPI',
+            'sendInvoiceAPI',
       ];
 
       protected function init()
@@ -53,6 +55,14 @@ class RestfulAPIController extends Controller
             if ($this->getRequest()->httpMethod() === 'OPTIONS') {
                   return $this->jsonResponse(['message' => 'OK'], 200);
             }
+      }
+
+      protected $emailService;
+
+      public function __construct()
+      {
+            parent::__construct();
+            $this->emailService = Injector::inst()->get(EmailService::class);
       }
 
       public function index(HTTPRequest $request)
@@ -74,6 +84,8 @@ class RestfulAPIController extends Controller
                         'CRUD /api/v1/cartitem/{id}' => 'Cart management',
                         'CRUD /api/v1/payment/{id}' => 'Payment management',
                         'POST /api/paymentmethods' => 'Get payment methods',
+                        'GET /api/v1/order/ID/pdf' => 'download PDF Invoice',
+                        'POST /api/v1/order/ID/send-email' => 'Send Invoice to Email User',
                   ],
                   'available_models' => $this->getAvailableModels(),
                   'note' => 'Use POST method for login with JSON: {"email":"user@example.com","password":"pass123"}'
@@ -557,6 +569,56 @@ class RestfulAPIController extends Controller
             } catch (Exception $e) {
                   return $this->jsonResponse([
                         'error' => 'Order creation failed',
+                        'details' => $e->getMessage()
+                  ], 500);
+            }
+      }
+
+      public function downloadInvoiceAPI(HTTPRequest $request)
+      {
+            $orderID = $request->param('ID');
+            $order = Order::get()->byID($orderID);
+
+            if (!$order) {
+                  return $this->jsonResponse(['error' => 'Order tidak ditemukan'], 404);
+            }
+
+            $user = $order->Member();
+            $siteConfig = SiteConfig::current_site_config();
+
+            // Generate PDF
+            $pdfContent = $this->emailService->generateInvoicePDF($order, $user, $siteConfig);
+
+            // Encode PDF ke Base64 supaya bisa dikirim via JSON
+            $pdfBase64 = base64_encode($pdfContent);
+
+            return $this->jsonResponse([
+                  'success' => true,
+                  'orderID' => $order->ID,
+                  'NomorInvoice' => $order->NomorInvoice,
+                  'pdf_base64' => $pdfBase64
+            ]);
+      }
+
+      public function sendInvoiceAPI(HTTPRequest $request)
+      {
+            $orderID = $request->param('ID');
+            $order = Order::get()->byID($orderID);
+
+            if (!$order) {
+                  return $this->jsonResponse(['error' => 'Order tidak ditemukan'], 404);
+            }
+
+            try {
+                  $this->emailService->sendInvoiceEmail($order);
+                  return $this->jsonResponse([
+                        'success' => true,
+                        'message' => 'Email invoice telah dikirim ke ' . $order->Member()->Email
+                  ]);
+            } catch (\Exception $e) {
+                  return $this->jsonResponse([
+                        'success' => false,
+                        'error' => 'Gagal mengirim email',
                         'details' => $e->getMessage()
                   ], 500);
             }
