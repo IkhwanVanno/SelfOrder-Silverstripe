@@ -16,6 +16,7 @@ class Order extends DataObject
         'NomorInvoice' => 'Varchar(100)',
         'NomorMeja' => 'Varchar(10)',
         'Created' => 'Datetime',
+        'InvoiceSent' => 'Boolean'
     ];
 
     private static $has_one = [

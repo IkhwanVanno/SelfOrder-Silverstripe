@@ -291,7 +291,12 @@ class KeranjangPageController extends PageController
                     if ($order) {
                         $order->Status = 'Antrean';
                         $order->write();
-                        $this->emailService->sendInvoiceEmail($order);
+
+                        if (!$order->InvoiceSent) {
+                            $this->emailService->sendInvoiceEmail($order);
+                            $order->InvoiceSent = true;
+                            $order->write();
+                        }
                     }
 
                     $this->setFlashMessage('success', 'Pembayaran berhasil! Pesanan Anda sedang dalam antrean.');
@@ -348,7 +353,12 @@ class KeranjangPageController extends PageController
                 if ($order) {
                     $order->Status = 'Antrean';
                     $order->write();
-                    // $this->emailService->sendInvoiceEmail($order);
+
+                    if (!$order->InvoiceSent) {
+                        $this->emailService->sendInvoiceEmail($order);
+                        $order->InvoiceSent = true;
+                        $order->write();
+                    }
                 }
             } else {
                 $payment->Status = 'Failed';
@@ -397,7 +407,7 @@ class KeranjangPageController extends PageController
         $this->emailService->sendInvoiceEmail($order);
         $this->getRequest()->getSession()->set('FlashMessage', [
             'Type' => 'success',
-            'Message' => 'Email invoice telah dikirim. Silakan periksa kotak Email anda.'
+            'Message' => 'Email invoice telah dikirim ulang.'
         ]);
         return $this->redirectBack();
     }
