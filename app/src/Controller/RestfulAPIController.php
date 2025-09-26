@@ -670,10 +670,7 @@ class RestfulAPIController extends Controller
 
       protected function extractIdFromRequest(HTTPRequest $request)
       {
-            // Try to get ID from URL parameter first
             $id = $request->param('ID');
-
-            // If not found, try to extract from remaining URL
             if (!$id) {
                   $remaining = $request->remaining();
                   if ($remaining) {
@@ -687,24 +684,62 @@ class RestfulAPIController extends Controller
             return $id;
       }
 
+      protected function serializeOrder($order)
+      {
+            if (!$order) {
+                  return null;
+            }
+            $data = $this->serializeDataObject($order);
+            try {
+                  $orderItems = $order->OrderItems();
+                  $data['OrderItems'] = [];
+
+                  if ($orderItems && $orderItems->count() > 0) {
+                        foreach ($orderItems as $item) {
+                              if ($item && $item->exists()) {
+                                    $itemData = [
+                                          'ID' => $item->ID,
+                                          'Kuantitas' => $item->Kuantitas,
+                                          'HargaSatuan' => $item->HargaSatuan,
+                                          'Produk' => null
+                                    ];
+                                    try {
+                                          $product = $item->Produk();
+                                          if ($product && $product->exists()) {
+                                                $itemData['Produk'] = [
+                                                      'ID' => $product->ID,
+                                                      'Nama' => $product->Nama,
+                                                      'Harga' => $product->Harga,
+                                                      'Status' => $product->Status
+                                                ];
+                                          }
+                                    } catch (Exception $e) {
+                                    }
+                                    $data['OrderItems'][] = $itemData;
+                              }
+                        }
+                  }
+            } catch (Exception $e) {
+                  $data['OrderItems'] = [];
+                  error_log('Error serializing OrderItems: ' . $e->getMessage());
+            }
+
+            return $data;
+      }
+
       protected function listRecords($modelClass, HTTPRequest $request)
       {
             try {
                   $objects = $modelClass::get();
 
-                  // Apply filters
                   $filters = $this->getFilters($request);
                   if ($filters) {
                         $objects = $objects->filter($filters);
                   }
-
-                  // Apply sorting
                   $sort = $this->getSort($request);
                   if ($sort) {
                         $objects = $objects->sort($sort);
                   }
-
-                  // Apply pagination
                   $pagination = $this->getPagination($request);
                   $paginatedObjects = $objects->limit($pagination['limit'], $pagination['offset']);
 
@@ -712,6 +747,8 @@ class RestfulAPIController extends Controller
                   foreach ($paginatedObjects as $object) {
                         if ($modelClass === 'Member') {
                               $serializedData[] = $this->serializeMember($object);
+                        } else if ($modelClass === 'Order') {
+                              $serializedData[] = $this->serializeOrder($object);
                         } else {
                               $serializedData[] = $this->serializeDataObject($object);
                         }
@@ -747,9 +784,13 @@ class RestfulAPIController extends Controller
                         }
                   }
 
-                  $serializedData = ($modelClass === 'Member') ?
-                        $this->serializeMember($object) :
-                        $this->serializeDataObject($object);
+                  if ($modelClass === 'Member') {
+                        $serializedData = $this->serializeMember($object);
+                  } else if ($modelClass === 'Order') {
+                        $serializedData = $this->serializeOrder($object);
+                  } else {
+                        $serializedData = $this->serializeDataObject($object);
+                  }
 
                   return $this->jsonResponse(['data' => $serializedData]);
 
