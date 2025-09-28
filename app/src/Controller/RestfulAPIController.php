@@ -730,16 +730,37 @@ class RestfulAPIController extends Controller
       protected function listRecords($modelClass, HTTPRequest $request)
       {
             try {
-                  $objects = $modelClass::get();
+                  if ($modelClass === 'Order') {
+                        $currentUser = Security::getCurrentUser();
+                        if (!$currentUser) {
+                              return $this->jsonResponse(['error' => 'Authentication required'], 401);
+                        }
+                        $objects = Order::get()->filter('MemberID', $currentUser->ID);
+                  } else {
+                        $objects = $modelClass::get();
+                        if (in_array($modelClass, ['CartItem', 'Payment'])) {
+                              $currentUser = Security::getCurrentUser();
+                              if (!$currentUser) {
+                                    return $this->jsonResponse(['error' => 'Authentication required'], 401);
+                              }
+                              $objects = $objects->filter('MemberID', $currentUser->ID);
+                        }
+                  }
 
                   $filters = $this->getFilters($request);
                   if ($filters) {
                         $objects = $objects->filter($filters);
                   }
+
                   $sort = $this->getSort($request);
                   if ($sort) {
                         $objects = $objects->sort($sort);
+                  } else {
+                        if ($modelClass === 'Order') {
+                              $objects = $objects->sort('Created DESC');
+                        }
                   }
+
                   $pagination = $this->getPagination($request);
                   $paginatedObjects = $objects->limit($pagination['limit'], $pagination['offset']);
 
@@ -757,8 +778,10 @@ class RestfulAPIController extends Controller
                   return $this->jsonResponse([
                         'data' => $serializedData,
                         'total' => $objects->count(),
-                        'pagination' => $pagination
+                        'pagination' => $pagination,
+                        'user_id' => Security::getCurrentUser() ? Security::getCurrentUser()->ID : null // Debug info
                   ]);
+
             } catch (Exception $e) {
                   return $this->jsonResponse([
                         'error' => 'Failed to list records',
@@ -766,7 +789,6 @@ class RestfulAPIController extends Controller
                   ], 500);
             }
       }
-
       protected function getRecord($modelClass, $id)
       {
             try {
