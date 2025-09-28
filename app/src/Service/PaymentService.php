@@ -82,7 +82,7 @@ class PaymentService
         $merchantUserInfo = trim($user->FirstName . ' ' . $user->Surname);
         $customerVaName = $merchantUserInfo;
 
-        $baseUrl = rtrim(Director::absoluteBaseURL(), '/');
+        $baseUrl = Environment::getEnv('SS_BASE_URL'); 
         $callbackUrl = $baseUrl . '/keranjang/callback';
         $returnUrl = $baseUrl . '/keranjang/return';
         $expiryPeriod = 10; // dalam menit

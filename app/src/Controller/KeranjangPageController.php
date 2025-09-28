@@ -4,6 +4,7 @@ use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Environment;
+use SilverStripe\Dev\Debug;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\SiteConfig\SiteConfig;
 use SilverStripe\View\ArrayData;
@@ -272,49 +273,14 @@ class KeranjangPageController extends PageController
 
     public function return(HTTPRequest $request)
     {
-        $merchantOrderId = $request->getVar('merchantOrderId') ?: $request->postVar('merchantOrderId');
-        $resultCode = $request->getVar('resultCode') ?: $request->postVar('resultCode');
-        $reference = $request->getVar('reference') ?: $request->postVar('reference');
+        $resultCode = $request->getVar('resultCode');
 
-        if ($merchantOrderId && $resultCode) {
-            $payment = Payment::get()->filter('Reference', $merchantOrderId)->first();
-
-            if ($payment) {
-                if ($resultCode == '00') {
-                    $payment->Status = 'Completed';
-                    if ($reference) {
-                        $payment->DuitkuTransactionID = $reference;
-                    }
-                    $payment->write();
-
-                    $order = $payment->Order();
-                    if ($order) {
-                        $order->Status = 'Antrean';
-                        $order->write();
-
-                        if (!$order->InvoiceSent) {
-                            $this->emailService->sendInvoiceEmail($order);
-                            $order->InvoiceSent = true;
-                            $order->write();
-                        }
-                    }
-
-                    $this->setFlashMessage('success', 'Pembayaran berhasil! Pesanan Anda sedang dalam antrean.');
-                } else {
-                    $payment->Status = 'Failed';
-                    $payment->write();
-                    $order = $payment->Order();
-                    if ($order) {
-                        $order->Status = 'Dibatalkan';
-                        $order->write();
-                    }
-                    $this->setFlashMessage('error', 'Pembayaran gagal atau dibatalkan.');
-                }
-            } else {
-                $this->setFlashMessage('error', 'Data pembayaran tidak ditemukan.');
-            }
+        if ($resultCode === '00') {
+            $this->setFlashMessage('success', 'Pembayaran berhasil! Pesanan Anda sedang dalam antrean.');
+        } elseif ($resultCode === '01') {
+            $this->setFlashMessage('error', 'Pembayaran dibatalkan.');
         } else {
-            $this->setFlashMessage('info', 'Status pembayaran tidak dapat dipastikan. Silakan periksa kembali nanti.');
+            $this->setFlashMessage('info', 'Status pembayaran tidak dapat dipastikan. Silakan cek kembali.');
         }
 
         return $this->redirect(Director::absoluteBaseURL());
@@ -322,52 +288,63 @@ class KeranjangPageController extends PageController
 
     public function callback(HTTPRequest $request)
     {
-        $merchantOrderId = $request->postVar('merchantOrderId') ?: $request->getVar('merchantOrderId');
-        $resultCode = $request->postVar('resultCode') ?: $request->getVar('resultCode');
-        $signature = $request->postVar('signature') ?: $request->getVar('signature');
-        $reference = $request->postVar('reference') ?: $request->getVar('reference');
+        $merchantCode = $request->postVar('merchantCode') ?? $request->getVar('merchantCode');
+        $amount = $request->postVar('amount') ?? $request->getVar('amount');
+        $merchantOrderId = $request->postVar('merchantOrderId') ?? $request->getVar('merchantOrderId');
+        $productDetail = $request->postVar('productDetail') ?? $request->getVar('productDetail');
+        $additionalParam = $request->postVar('additionalParam') ?? $request->getVar('additionalParam');
+        $paymentCode = $request->postVar('paymentCode') ?? $request->getVar('paymentCode');
+        $resultCode = $request->postVar('resultCode') ?? $request->getVar('resultCode');
+        $merchantUserId = $request->postVar('merchantUserId') ?? $request->getVar('merchantUserId');
+        $reference = $request->postVar('reference') ?? $request->getVar('reference');
+        $signature = $request->postVar('signature') ?? $request->getVar('signature');
+        $publisherOrderId = $request->postVar('publisherOrderId') ?? $request->getVar('publisherOrderId');
+        $spUserHash = $request->postVar('spUserHash') ?? $request->getVar('spUserHash');
+        $settlementDate = $request->postVar('settlementDate') ?? $request->getVar('settlementDate');
+        $issuerCode = $request->postVar('issuerCode') ?? $request->getVar('issuerCode');
 
-        if (!$merchantOrderId || !$resultCode || !$signature) {
-            return $this->httpError(400, 'Invalid callback data');
+        if (!$merchantCode || !$amount || !$merchantOrderId || !$signature) {
+            return new HTTPResponse('Bad Parameter', 400);
         }
 
         $apiKey = Environment::getEnv('DUITKU_API_KEY');
-        $merchantCode = Environment::getEnv('DUITKU_MERCHANT_CODE');
-        $expectedSignature = md5($merchantCode . $merchantOrderId . $resultCode . $apiKey);
+        $expectedSignature = md5($merchantCode . $amount . $merchantOrderId . $apiKey);
 
         if ($signature !== $expectedSignature) {
-            return $this->httpError(400, 'Invalid signature');
+            return new HTTPResponse('Bad Signature', 400);
         }
 
         $payment = Payment::get()->filter('Reference', $merchantOrderId)->first();
+        if (!$payment) {
+            return new HTTPResponse('Payment not found', 404);
+        }
 
-        if ($payment) {
-            if ($resultCode == '00') {
-                $payment->Status = 'Completed';
-                if ($reference) {
-                    $payment->DuitkuTransactionID = $reference;
-                }
-                $payment->write();
+        if ($resultCode == '00') {
+            $payment->Status = 'Completed';
+            if ($reference) {
+                $payment->DuitkuTransactionID = $reference;
+            }
+            $payment->write();
 
-                $order = $payment->Order();
-                if ($order) {
-                    $order->Status = 'Antrean';
-                    $order->write();
+            $order = $payment->Order();
+            if ($order) {
+                $order->Status = 'Antrean';
+                $order->write();
 
-                    if (!$order->InvoiceSent) {
-                        $this->emailService->sendInvoiceEmail($order);
-                        $order->InvoiceSent = true;
-                        $order->write();
-                    }
-                }
-            } else {
-                $payment->Status = 'Failed';
-                $payment->write();
-                $order = $payment->Order();
-                if ($order) {
-                    $order->Status = 'Dibatalkan';
+                if (!$order->InvoiceSent) {
+                    $this->emailService->sendInvoiceEmail($order);
+                    $order->InvoiceSent = true;
                     $order->write();
                 }
+            }
+        } else {
+            $payment->Status = 'Failed';
+            $payment->write();
+
+            $order = $payment->Order();
+            if ($order) {
+                $order->Status = 'Dibatalkan';
+                $order->write();
             }
         }
 
