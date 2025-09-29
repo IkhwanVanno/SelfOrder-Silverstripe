@@ -20,7 +20,7 @@ use SilverStripe\ORM\ValidationResult;
 
 class RestfulAPIController extends Controller
 {
-      private static $url_segment = 'api/v1';
+      private static $url_segment = 'api';
 
       private static $allowed_actions = [
             'index',
@@ -68,24 +68,24 @@ class RestfulAPIController extends Controller
       public function index(HTTPRequest $request)
       {
             return $this->jsonResponse([
-                  'message' => 'SilverStripe RESTful API v1 - Fixed Version',
+                  'message' => 'SilverStripe RESTful API',
                   'status' => 'Working',
                   'endpoints' => [
-                        'GET /api/v1' => 'API information',
-                        'POST /api/v1/register' => 'User Register',
-                        'POST /api/v1/login' => 'User login (email, password)',
-                        'POST /api/v1/logout' => 'User logout',
-                        'GET /api/v1/currentMemberr' => 'Get current user',
-                        'GET|PUT /api/v1/siteconfig' => 'Site configuration',
-                        'CRUD /api/v1/member/{id}' => 'Member management',
-                        'CRUD /api/v1/produk/{id}' => 'Product management',
-                        'CRUD /api/v1/kategoriproduk/{id}' => 'Category management',
-                        'CRUD /api/v1/order/{id}' => 'Order management',
-                        'CRUD /api/v1/cartitem/{id}' => 'Cart management',
-                        'CRUD /api/v1/payment/{id}' => 'Payment management',
+                        'GET /api' => 'API information',
+                        'POST /api/register' => 'User Register',
+                        'POST /api/login' => 'User login (email, password)',
+                        'POST /api/logout' => 'User logout',
+                        'GET /api/currentMemberr' => 'Get current user',
+                        'GET|PUT /api/siteconfig' => 'Site configuration',
+                        'CRUD /api/member/{id}' => 'Member management',
+                        'CRUD /api/produk/{id}' => 'Product management',
+                        'CRUD /api/kategoriproduk/{id}' => 'Category management',
+                        'CRUD /api/order/{id}' => 'Order management',
+                        'CRUD /api/cartitem/{id}' => 'Cart management',
+                        'CRUD /api/payment/{id}' => 'Payment management',
                         'POST /api/paymentmethods' => 'Get payment methods',
-                        'GET /api/v1/order/ID/pdf' => 'download PDF Invoice',
-                        'POST /api/v1/order/ID/send-email' => 'Send Invoice to Email User',
+                        'GET /api/order/ID/pdf' => 'download PDF Invoice',
+                        'POST /api/order/ID/send-email' => 'Send Invoice to Email User',
                   ],
                   'available_models' => $this->getAvailableModels(),
                   'note' => 'Use POST method for login with JSON: {"email":"user@example.com","password":"pass123"}'

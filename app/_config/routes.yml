@@ -4,4 +4,4 @@ After: '#rootroutes'
 ---
 SilverStripe\Control\Director:
   rules:
-    'api/v1': 'RestfulAPIController'
+    'api': 'RestfulAPIController'
