@@ -106,9 +106,9 @@ class AuthService
     }
 
     // === Forgot Password Service ===
-    public function processForgotPassword(HTTPRequest $request)
+    public function processForgotPassword(HTTPRequest $request, $emailParam = null)
     {
-        $email = $request->postVar('forgot_email');
+        $email = $emailParam ?: $request->postVar('forgot_email');
         $result = ValidationResult::create();
 
         if (!$email) {
@@ -157,8 +157,7 @@ class AuthService
                 $result->addMessage('Link atur ulang sandi telah dikirim ke email Anda.');
             } catch (ValidationException $eror) {
                 $result->addError('Gagal mengirim email. Silakan coba lagi.');
-            } 
-
+            }
         } catch (Exception $e) {
             $result->addError('Terjadi kesalahan sistem. Silakan coba lagi.');
         }

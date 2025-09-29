@@ -26,6 +26,7 @@ class RestfulAPIController extends Controller
             'index',
             'register',
             'login',
+            'forgotpassword',
             'logout',
             'currentMemberr',
             'siteconfig',
@@ -57,11 +58,13 @@ class RestfulAPIController extends Controller
             }
       }
 
+      protected $authService;
       protected $emailService;
 
       public function __construct()
       {
             parent::__construct();
+            $this->authService = Injector::inst()->get(AuthService::class);
             $this->emailService = Injector::inst()->get(EmailService::class);
       }
 
@@ -74,6 +77,7 @@ class RestfulAPIController extends Controller
                         'GET /api' => 'API information',
                         'POST /api/register' => 'User Register',
                         'POST /api/login' => 'User login (email, password)',
+                        'POST /api/forgotpassword' => 'Forgot password (email)',
                         'POST /api/logout' => 'User logout',
                         'GET /api/currentMemberr' => 'Get current user',
                         'GET|PUT /api/siteconfig' => 'Site configuration',
@@ -107,10 +111,7 @@ class RestfulAPIController extends Controller
                   $member->Surname = $data['Surname'] ?? '';
                   $member->Email = $data['Email'] ?? '';
                   $member->changePassword($data['Password'] ?? '');
-
                   $member->write();
-
-                  // Optional: Masukkan ke grup
                   $member->addToGroupByCode('site-users');
 
                   return $this->jsonResponse([
@@ -141,14 +142,11 @@ class RestfulAPIController extends Controller
                   ], 400);
             }
 
-            // Find member by email
             $member = Member::get()->filter('Email', $data['email'])->first();
-
             if (!$member) {
                   return $this->jsonResponse(['error' => 'User not found'], 401);
             }
 
-            // Alternative authentication method using password verification
             try {
                   $authenticator = new MemberAuthenticator();
                   $loginHandler = new LoginHandler('login', $authenticator);
@@ -165,16 +163,13 @@ class RestfulAPIController extends Controller
                         return $this->jsonResponse(['error' => 'Invalid credentials'], 401);
                   }
 
-                  // Perform login
                   $loginHandler->performLogin($authenticatedMember, $authData, $request);
-
                   return $this->jsonResponse([
                         'message' => 'Login successful',
                         'user' => $this->serializeMember($authenticatedMember)
                   ]);
 
             } catch (Exception $e) {
-                  // Fallback: Manual password verification (less secure but works)
                   if ($this->verifyPassword($data['password'], $member)) {
                         Security::setCurrentUser($member);
 
@@ -193,11 +188,8 @@ class RestfulAPIController extends Controller
 
       private function verifyPassword($plainPassword, $member)
       {
-            // Get the encrypted password from member
             $encryptedPassword = $member->Password;
             $algorithm = $member->PasswordEncryption ?: 'blowfish';
-
-            // Simple verification for common algorithms
             switch ($algorithm) {
                   case 'blowfish':
                         return password_verify($plainPassword, $encryptedPassword);
@@ -206,9 +198,41 @@ class RestfulAPIController extends Controller
                   case 'md5':
                         return md5($plainPassword) === $encryptedPassword;
                   default:
-                        // For other algorithms, try password_verify
                         return password_verify($plainPassword, $encryptedPassword);
             }
+      }
+
+      // Forgot Password
+      public function forgotpassword(HTTPRequest $request)
+      {
+            $data = $this->getRequestData($request);
+            $email = $data['email'] ?? '';
+
+            if (empty($email)) {
+                  return $this->jsonResponse([
+                        'success' => false,
+                        'message' => 'Email wajib diisi.'
+                  ], 422);
+            }
+
+            $validationResult = $this->authService->processForgotPassword($request, $email);
+            if ($validationResult && $validationResult->isValid()) {
+                  return $this->jsonResponse([
+                        'success' => true,
+                        'message' => 'Link atur ulang kata sandi telah dikirim ke email Anda.'
+                  ], 200);
+            }
+
+            $errorMessages = $validationResult ? $validationResult->getMessages() : [];
+            $errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+            if (!empty($errorMessages)) {
+                  $errorMessage = $errorMessages[0]['message'] ?? $errorMessage;
+            }
+
+            return $this->jsonResponse([
+                  'success' => false,
+                  'message' => $errorMessage
+            ], 400);
       }
 
       public function logout(HTTPRequest $request)
@@ -406,7 +430,6 @@ class RestfulAPIController extends Controller
                         ], 200);
                   }
 
-                  // Transform the payment methods for Flutter consumption
                   $formattedMethods = [];
                   foreach ($paymentMethods as $method) {
                         $formattedMethods[] = [
@@ -452,7 +475,6 @@ class RestfulAPIController extends Controller
             }
 
             try {
-                  // Calculate totals from items
                   $subtotal = 0;
                   $orderItems = [];
 
