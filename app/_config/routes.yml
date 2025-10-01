@@ -1,7 +1,7 @@
 ---
 Name: api-routes
-After: '#rootroutes'
+After: "#rootroutes"
 ---
 SilverStripe\Control\Director:
   rules:
-    'api': 'RestfulAPIController'
+    "api": "RestfulAPIController"
