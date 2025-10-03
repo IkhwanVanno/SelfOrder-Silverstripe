@@ -2,6 +2,7 @@
 
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Environment;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
@@ -16,6 +17,8 @@ class AuthPageController extends PageController
         'Logout',
         'forgotPassword',
         'resetPassword',
+        'googleLogin',
+        'googleCallback'
     ];
 
     private static $url_handlers = [
@@ -24,6 +27,8 @@ class AuthPageController extends PageController
         'logout' => 'Logout',
         'forgotpassword' => 'forgotPassword',
         'resetpassword' => 'resetPassword',
+        'google-login' => 'googleLogin',
+        'google-callback' => 'googleCallback'
     ];
 
     private $AuthService;
@@ -34,7 +39,157 @@ class AuthPageController extends PageController
         $this->AuthService = new AuthService();
     }
 
-    // === Authentication ===
+
+    // === Google Authentication ===
+    private function getGoogleConfig()
+    {
+        return [
+            'client_id' => Environment::getEnv('GOOGLE_CLIENT_ID'),
+            'client_secret' => Environment::getEnv('GOOGLE_CLIENT_SECRET'),
+            'redirect_uri' => Director::absoluteBaseURL() . '/auth/google-callback',
+            'auth_url' => 'https://accounts.google.com/o/oauth2/v2/auth',
+            'token_url' => 'https://oauth2.googleapis.com/token',
+            'userinfo_url' => 'https://www.googleapis.com/oauth2/v2/userinfo'
+        ];
+    }
+
+    public function googleLogin(HTTPRequest $request)
+    {
+        $config = $this->getGoogleConfig();
+
+        $params = [
+            'client_id' => $config['client_id'],
+            'redirect_uri' => $config['redirect_uri'],
+            'response_type' => 'code',
+            'scope' => 'email profile',
+            'access_type' => 'online'
+        ];
+
+        $authUrl = $config['auth_url'] . '?' . http_build_query($params);
+
+        return $this->redirect($authUrl);
+    }
+
+    public function googleCallback(HTTPRequest $request)
+    {
+        $code = $request->getVar('code');
+        if (!$code) {
+            $request->getSession()->set('FlashMessage', [
+                'Message' => 'Login dengan Google dibatalkan.',
+                'Type' => 'warning'
+            ]);
+            return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
+        }
+
+        try {
+            $config = $this->getGoogleConfig();
+            $tokenData = $this->getGoogleAccessToken($code, $config);
+
+            if (!isset($tokenData['access_token'])) {
+                throw new \Exception('Failed to get access token');
+            }
+
+            $userInfo = $this->getGoogleUserInfo($tokenData['access_token'], $config);
+
+            if (!isset($userInfo['email'])) {
+                throw new \Exception('Failed to get user email');
+            }
+
+            $email = $userInfo['email'];
+            $firstName = $userInfo['given_name'] ?? '';
+            $lastName = $userInfo['family_name'] ?? '';
+            $googleId = $userInfo['id'];
+
+            $member = Member::get()->filter('Email', $email)->first();
+
+            if (!$member) {
+                $member = Member::create();
+                $member->FirstName = $firstName;
+                $member->Surname = $lastName;
+                $member->Email = $email;
+                $member->GoogleID = $googleId;
+                $member->IsVerified = true;
+                $member->write();
+                $member->addToGroupByCode('site-users');
+
+                $member->changePassword(bin2hex(random_bytes(16)));
+
+                $request->getSession()->set('FlashMessage', [
+                    'Message' => 'Akun berhasil dibuat dengan Google. Selamat datang!',
+                    'Type' => 'success'
+                ]);
+            } else {
+                if (!$member->GoogleID) {
+                    $member->GoogleID = $googleId;
+                    $member->IsVerified = true;
+                    $member->write();
+                }
+
+                $request->getSession()->set('FlashMessage', [
+                    'Message' => 'Masuk berhasil! Selamat datang.',
+                    'Type' => 'primary'
+                ]);
+            }
+
+            Injector::inst()->get(IdentityStore::class)->logIn($member, false, $request);
+            return $this->redirect(Director::absoluteBaseURL());
+
+        } catch (\Exception $e) {
+            $request->getSession()->set('FlashMessage', [
+                'Message' => 'Terjadi kesalahan saat login dengan Google: ' . $e->getMessage(),
+                'Type' => 'danger'
+            ]);
+            return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
+        }
+    }
+    private function getGoogleAccessToken($code, $config)
+    {
+        $postData = [
+            'code' => $code,
+            'client_id' => $config['client_id'],
+            'client_secret' => $config['client_secret'],
+            'redirect_uri' => $config['redirect_uri'],
+            'grant_type' => 'authorization_code'
+        ];
+
+        $ch = curl_init($config['token_url']);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For local development
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            throw new \Exception('Failed to exchange code for token. HTTP Code: ' . $httpCode);
+        }
+
+        return json_decode($response, true);
+    }
+
+    private function getGoogleUserInfo($accessToken, $config)
+    {
+        $ch = curl_init($config['userinfo_url']);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $accessToken
+        ]);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For local development
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            throw new \Exception('Failed to get user info. HTTP Code: ' . $httpCode);
+        }
+
+        return json_decode($response, true);
+    }
+
+    // === Manual Authentication ===
     public function Login(HTTPRequest $request)
     {
         $validationResult = null;

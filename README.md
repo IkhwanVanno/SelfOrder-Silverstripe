@@ -3,6 +3,7 @@
 Proyek ini adalah platform e-commerce sederhana yang dibangun menggunakan Silverstripe CMS dan terintegrasi dengan API seperti Duitku.
 
 ## 🚀 Fitur Utama
+- Login dengan Google Auth
 - Manajemen produk & kategori
 - Pembayaran otomatis (Duitku Sandbox)
 - Dashboard admin (CMS)
@@ -44,6 +45,10 @@ SS_DEFAULT_ADMIN_PASSWORD="password"
 
 # Mailer
 MAILER_DSN=""
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
 
 # API Duitku (Sandbox)
 DUITKU_MERCHANT_CODE=
