@@ -548,6 +548,10 @@ class RestfulAPIController extends Controller
 
             if ($existingItem) {
                 $existingItem->Kuantitas += $kuantitas;
+                $existingItem->Kuantitas = max(1, $existingItem->Kuantitas);
+                if ($existingItem->Kuantitas > $produk->Stok) {
+                    $existingItem->Kuantitas = $produk->Stok;
+                }
                 $existingItem->write();
                 $cartItem = $existingItem;
             } else {
@@ -564,7 +568,12 @@ class RestfulAPIController extends Controller
                 'data' => [
                     'id' => $cartItem->ID,
                     'produk_id' => $cartItem->ProdukID,
+                    'produk_nama' => $cartItem->Produk()->Nama,
+                    'produk_harga' => $cartItem->Produk()->Harga,
+                    'produk_image_url' => $cartItem->Produk()->Image()->exists() ?
+                        $cartItem->Produk()->Image()->getAbsoluteURL() : null,
                     'kuantitas' => $cartItem->Kuantitas,
+                    'subtotal' => $cartItem->getSubtotal(),
                 ]
             ], 201);
         }
@@ -604,7 +613,13 @@ class RestfulAPIController extends Controller
                 'message' => 'Cart item updated',
                 'data' => [
                     'id' => $cartItem->ID,
+                    'produk_id' => $cartItem->ProdukID,
+                    'produk_nama' => $cartItem->Produk()->Nama,
+                    'produk_harga' => $cartItem->Produk()->Harga,
+                    'produk_image_url' => $cartItem->Produk()->Image()->exists() ?
+                        $cartItem->Produk()->Image()->getAbsoluteURL() : null,
                     'kuantitas' => $cartItem->Kuantitas,
+                    'subtotal' => $cartItem->getSubtotal(),
                 ]
             ]);
         }
