@@ -19,6 +19,7 @@ class RestfulAPIController extends Controller
         'login',
         'register',
         'logout',
+        'googleAuth',
         'member',
         'updateMember',
         'updatePassword',
@@ -36,13 +37,13 @@ class RestfulAPIController extends Controller
         'downloadInvoiceAPI',
         'sendInvoiceAPI',
         'forgotpassword',
-        'googleLoginAPI',
     ];
 
     private static $url_handlers = [
         'login' => 'login',
         'register' => 'register',
         'logout' => 'logout',
+        'google-auth' => 'googleAuth',
         'member/password' => 'updatePassword',
         'member' => 'member',
         'siteconfig' => 'siteconfig',
@@ -58,7 +59,6 @@ class RestfulAPIController extends Controller
         'payment' => 'payment',
         'paymentmethods' => 'paymentmethods',
         'forgotpassword' => 'forgotpassword',
-        'google-login' => 'googleLoginAPI',
         '' => 'index',
     ];
 
@@ -81,7 +81,7 @@ class RestfulAPIController extends Controller
             'status' => 'operational',
             'endpoints' => [
                 'authentication' => [
-                    'POST /api/google-login' => 'Google Auth',
+                    'POST /api/google-auth' => 'Firebase Google Auth',
                     'POST /api/login' => 'Login user',
                     'POST /api/register' => 'Register new user',
                     'POST /api/logout' => 'Logout current user',
@@ -130,112 +130,63 @@ class RestfulAPIController extends Controller
 
     // ========== AUTHENTICATION ==========
     // * GOOGLE AUTH *
-    public function googleLoginAPI(HTTPRequest $request)
+    // * Firebase *
+    public function googleAuth(HTTPRequest $request)
     {
         if (!$request->isPOST()) {
-            return $this->jsonResponse(['error' => 'Gunakan metode POST'], 405);
+            return $this->jsonResponse(['error' => 'Only POST method allowed'], 405);
         }
 
         $data = json_decode($request->getBody(), true);
 
-        // METHOD 1: Using ID Token (requires Web Client ID configuration)
-        // $idToken = $data['id_token'] ?? null;
-        // $accessToken = $data['access_token'] ?? null;
-        
-        // if ($idToken) {
-        //     $userInfo = $this->verifyGoogleIdToken($idToken);
-        // } elseif ($accessToken) {
-        //     $userInfo = $this->getGoogleUserInfo($accessToken);
-        // }
-        
-        // if (!$userInfo || !isset($userInfo['email'])) {
-        //     return $this->jsonResponse([
-        //         'error' => 'Token tidak valid atau gagal verifikasi',
-        //     ], 400);
-        // }
-        
-        // $email = $userInfo['email'];
-        // $firstName = $userInfo['given_name'] ?? '';
-        // $lastName = $userInfo['family_name'] ?? '';
-        // $googleId = $userInfo['sub'] ?? '';
-
-        // METHOD 2: Using basic user data (current method - no Web Client ID needed)
-        // COMMENT FROM HERE ↓
-        $email = $data['email'] ?? null;
-        $displayName = $data['display_name'] ?? '';
-        $googleId = $data['id'] ?? null;
-
-        if (!$email || !$googleId) {
-            return $this->jsonResponse(['error' => 'Email dan Google ID diperlukan'], 400);
+        if (!isset($data['email'])) {
+            return $this->jsonResponse(['error' => 'Email is required'], 400);
         }
 
-        $nameParts = explode(' ', trim($displayName), 2);
-        $firstName = $nameParts[0] ?? '';
-        $lastName = $nameParts[1] ?? '';
-        // COMMENT UNTIL HERE ↑
+        try {
+            $email = $data['email'];
+            $displayName = $data['display_name'] ?? '';
+            $photoUrl = $data['photo_url'] ?? '';
 
-        $member = Member::get()->filter('Email', $email)->first();
+            $nameParts = explode(' ', $displayName, 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName = $nameParts[1] ?? '';
 
-        if (!$member) {
-            $member = Member::create();
-            $member->FirstName = $firstName;
-            $member->Surname = $lastName;
-            $member->Email = $email;
-            $member->GoogleID = $googleId;
-            $member->IsVerified = true;
-            $member->write();
-            $member->addToGroupByCode('site-users');
-            $member->changePassword(bin2hex(random_bytes(16)));
-        } else {
-            if (!$member->GoogleID) {
-                $member->GoogleID = $googleId;
+            $member = Member::get()->filter('Email', $email)->first();
+
+            if (!$member) {
+                $member = Member::create();
+                $member->FirstName = $firstName;
+                $member->Surname = $lastName;
+                $member->Email = $email;
                 $member->IsVerified = true;
                 $member->write();
+                $member->addToGroupByCode('site-users');
+                $member->changePassword(bin2hex(random_bytes(16)));
+            } else {
+                if (!$member->IsVerified) {
+                    $member->IsVerified = true;
+                    $member->write();
+                }
             }
+
+            Injector::inst()->get(IdentityStore::class)->logIn($member, false);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Google login successful',
+                'user' => [
+                    'id' => $member->ID,
+                    'email' => $member->Email,
+                    'first_name' => $member->FirstName,
+                    'surname' => $member->Surname,
+                ]
+            ]);
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => 'Google authentication failed'], 500);
         }
-
-        Injector::inst()->get(IdentityStore::class)->logIn($member, false);
-
-        return $this->jsonResponse([
-            'success' => true,
-            'message' => 'Login Google berhasil',
-            'user' => [
-                'id' => $member->ID,
-                'email' => $member->Email,
-                'nama' => $member->FirstName . ' ' . $member->Surname,
-                'first_name' => $member->FirstName,
-                'surname' => $member->Surname,
-            ]
-        ]);
-    }
-    private function verifyGoogleIdToken($idToken)
-    {
-        $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . $idToken;
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            return null;
-        }
-
-        return json_decode($response, true);
     }
 
-    private function getGoogleUserInfo($accessToken)
-    {
-        $url = 'https://www.googleapis.com/oauth2/v2/userinfo';
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' . $accessToken
-        ]);
-        $response = curl_exec($ch);
-        curl_close($ch);
-        return json_decode($response, true);
-    }
     // * MANUAL AUTH *
     public function login(HTTPRequest $request)
     {
