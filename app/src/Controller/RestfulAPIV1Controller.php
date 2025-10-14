@@ -719,6 +719,7 @@ class RestfulAPIController extends Controller
             $order->NomorMeja = $data['nomor_meja'];
             $order->write();
 
+            $orderItems = [];
             foreach ($cartItems as $cartItem) {
                 $orderItem = OrderItem::create();
                 $orderItem->OrderID = $order->ID;
@@ -726,6 +727,15 @@ class RestfulAPIController extends Controller
                 $orderItem->Kuantitas = $cartItem->Kuantitas;
                 $orderItem->HargaSatuan = $cartItem->Produk()->Harga;
                 $orderItem->write();
+
+                $orderItems[] = [
+                    'id' => $orderItem->ID,
+                    'produk_id' => $orderItem->ProdukID,
+                    'produk_nama' => $orderItem->Produk()->Nama,
+                    'kuantitas' => $orderItem->Kuantitas,
+                    'harga_satuan' => $orderItem->HargaSatuan,
+                    'subtotal' => $orderItem->getSubtotal(),
+                ];
             }
 
             $payment = Payment::create();
@@ -755,20 +765,22 @@ class RestfulAPIController extends Controller
                     'success' => true,
                     'message' => 'Order created successfully',
                     'data' => [
-                        'order_id' => $order->ID,
+                        'id' => $order->ID,
                         'nomor_invoice' => $order->NomorInvoice,
                         'nomor_meja' => $order->NomorMeja,
                         'total_harga' => $order->TotalHarga,
                         'total_harga_barang' => $order->TotalHargaBarang,
                         'payment_fee' => $order->PaymentFee,
                         'status' => $order->Status,
-                        'payment_url' => $paymentUrl,
+                        'created' => $order->Created,
+                        'items' => $orderItems,
                         'payment' => [
                             'id' => $payment->ID,
                             'reference' => $payment->Reference,
                             'metode_pembayaran' => $payment->MetodePembayaran,
                             'status' => $payment->Status,
                             'total_harga' => $payment->TotalHarga,
+                            'paymenturl' => $paymentUrl,
                         ]
                     ]
                 ], 201);
