@@ -1,9 +1,3 @@
-Keren banget proyekmu — apalagi sudah pakai Silverstripe + Duitku 👏
-Berikut versi **README.md yang sudah diformat seperti contoh “Restawrant”**, lengkap dengan struktur heading HTML, gambar preview dari folder proyek, badge GitHub, dan tampilan yang elegan:
-
----
-
-````md
 <h1 align="center">🛍️ Self Order (Silverstripe CMS)</h1>
 
 <p align="center">
