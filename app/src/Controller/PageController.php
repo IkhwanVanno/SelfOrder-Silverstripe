@@ -6,6 +6,8 @@ namespace {
     use SilverStripe\Control\HTTPRequest;
     use SilverStripe\Security\Security;
     use SilverStripe\View\ArrayData;
+    use SilverStripe\ORM\ArrayList;
+    use SilverStripe\ORM\Queries\SQLSelect;
 
     /**
      * @template T of Page
@@ -70,6 +72,7 @@ namespace {
         public function index(HTTPRequest $request)
         {
             $kategoriID = $request->getVar('Kategori');
+            $filter = $request->getVar('Filter');
 
             $produk = Produk::get();
 
@@ -77,10 +80,72 @@ namespace {
                 $produk = $produk->filter('KategoriID', $kategoriID);
             }
 
+            if ($filter) {
+                switch ($filter) {
+                    case 'populer':
+                        $produk = $this->getPopularProducts($produk);
+                        break;
+                    case 'harga_tertinggi':
+                        $produk = $produk->sort('Harga DESC');
+                        break;
+                    case 'harga_terendah':
+                        $produk = $produk->sort('Harga ASC');
+                        break;
+                }
+            }
+
             $data = $this->getCommonData();
             $data['Produk'] = $produk;
 
             return $this->customise($data)->renderWith(['Page', 'App']);
+        }
+
+        // === Get Popular Products ===
+        protected function getPopularProducts($produk)
+        {
+            $filteredProdukIDs = $produk->column('ID');
+
+            if (empty($filteredProdukIDs)) {
+                return $produk;
+            }
+
+            $records = OrderItem::get()->filter('ProdukID', $filteredProdukIDs);
+            $produkCounts = [];
+
+            foreach ($filteredProdukIDs as $id) {
+                $produkCounts[$id] = 0;
+            }
+
+            foreach ($records as $item) {
+                $produkID = $item->ProdukID;
+                if (isset($produkCounts[$produkID])) {
+                    $produkCounts[$produkID] += $item->Kuantitas;
+                }
+            }
+
+            arsort($produkCounts);
+            $sortedIDs = array_keys($produkCounts);
+
+            if (empty($sortedIDs)) {
+                return $produk;
+            }
+
+            $allProduks = $produk->filter('ID', $sortedIDs);
+            $produkMap = [];
+
+            foreach ($allProduks as $p) {
+                $produkMap[$p->ID] = $p;
+            }
+
+            $sortedProduks = [];
+            foreach ($sortedIDs as $id) {
+                if (isset($produkMap[$id])) {
+                    $sortedProduks[] = $produkMap[$id];
+                }
+            }
+
+            $list = new ArrayList($sortedProduks);
+            return $list;
         }
 
         // === USER AUTHENTICATION HELPERS ===
