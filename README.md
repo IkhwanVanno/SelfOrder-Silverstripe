@@ -1,35 +1,70 @@
-# 🛍️ Self Order (Silverstripe CMS)
-
-Proyek ini adalah platform e-commerce sederhana yang dibangun menggunakan Silverstripe CMS dan terintegrasi dengan API seperti Duitku.
-
-## 🚀 Fitur Utama
-- Login dengan Google Auth
-- Manajemen produk & kategori
-- Pembayaran otomatis (Duitku Sandbox)
-- Dashboard admin (CMS)
-- Invoice PDF dan email
-- Dukungan URL Ngrok untuk testing public
+Keren banget proyekmu — apalagi sudah pakai Silverstripe + Duitku 👏
+Berikut versi **README.md yang sudah diformat seperti contoh “Restawrant”**, lengkap dengan struktur heading HTML, gambar preview dari folder proyek, badge GitHub, dan tampilan yang elegan:
 
 ---
 
-## 📦 Langkah Instalasi
+````md
+<h1 align="center">🛍️ Self Order (Silverstripe CMS)</h1>
 
-### 1. Clone Repository
+<p align="center">
+  <img src="./Preview.png" alt="Self Order Preview" width="800">
+</p>
 
+<h4 align="center">
+Platform e-commerce sederhana berbasis <a href="https://www.silverstripe.org/" target="_blank">Silverstripe CMS</a> dengan integrasi <a href="https://duitku.com/" target="_blank">Duitku API</a> untuk pembayaran otomatis.
+</h4>
+
+<p align="center">
+	<img src="https://img.shields.io/github/stars/username/namaproject?style=flat-square">
+	<img src="https://img.shields.io/github/forks/username/namaproject?style=flat-square">
+	<img src="https://img.shields.io/github/issues/username/namaproject?style=flat-square">
+	<img src="https://img.shields.io/github/license/username/namaproject?style=flat-square">
+</p>
+
+<p align="center">
+  <a href="#tentang">Tentang</a> •
+  <a href="#fitur">Fitur</a> •
+  <a href="#instalasi">Instalasi</a> •
+  <a href="#ngrok">Ngrok</a> •
+  <a href="#struktur">Struktur</a> •
+  <a href="#tools">Tools</a> •
+  <a href="#kontribusi">Kontribusi</a> •
+  <a href="#lisensi">Lisensi</a>
+</p>
+
+---
+
+<h2 id="tentang">📖 Tentang</h2>
+
+Self Order adalah platform pemesanan mandiri berbasis Silverstripe CMS yang memungkinkan pelanggan melakukan pemesanan, pembayaran, dan menerima invoice otomatis melalui email.  
+Aplikasi ini cocok untuk restoran, kafe, atau toko kecil yang ingin sistem pemesanan digital tanpa biaya bulanan tinggi.
+
+---
+
+<h2 id="fitur">🚀 Fitur Utama</h2>
+
+- 🔐 Login dengan Google Auth  
+- 🛒 Manajemen produk & kategori  
+- 💳 Pembayaran otomatis (Duitku Sandbox)  
+- 📊 Dashboard admin (CMS)  
+- 🧾 Invoice PDF & Email  
+- 🌐 Dukungan URL Ngrok untuk webhook & testing publik  
+
+---
+
+<h2 id="instalasi">📦 Langkah Instalasi</h2>
+
+### 1️⃣ Clone Repository
 ```bash
 git clone https://github.com/username/namaproject.git
 cd namaproject
-```
+````
 
-### 2. Salin dan Atur File `.env`
-
-Salin file `.env.example` menjadi `.env` lalu isi seperti berikut:
+### 2️⃣ Salin dan Atur File `.env`
 
 ```dotenv
-# Environment type
+# Environment
 SS_ENVIRONMENT_TYPE="dev"
-
-# Base URL
 SS_BASE_URL="http://localhost/namaproject"
 
 # Database
@@ -39,18 +74,18 @@ SS_DATABASE_NAME="namadatabase"
 SS_DATABASE_USERNAME="root"
 SS_DATABASE_PASSWORD=""
 
-# Admin Login (pertama kali build)
+# Admin Login
 SS_DEFAULT_ADMIN_USERNAME="admin"
 SS_DEFAULT_ADMIN_PASSWORD="password"
 
 # Mailer
 MAILER_DSN=""
 
-# Google OAuth Configuration
+# Google OAuth
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 
-# API Duitku (Sandbox)
+# Duitku (Sandbox)
 DUITKU_MERCHANT_CODE=
 DUITKU_API_KEY=
 DUITKU_GETPAYMENTMETHOD_URL=
@@ -59,31 +94,30 @@ DUITKU_BASE_URL=
 # Ngrok
 NGROK_URL=https://ngrok_url/MetroShoppingG
 
-# Mixed Content Fix
+# Proxy Fix
 SS_TRUSTED_PROXY_IPS="*"
 SS_TRUSTED_PROXY_PROTOCOL_HEADER="X-Forwarded-Proto"
 SS_TRUSTED_PROXY_HOST_HEADER="X-Forwarded-Host"
 ```
 
-> 📝 **Catatan:** Ganti `namaproject`, `namadatabase`, dan `NGROK_URL` sesuai kebutuhanmu.
+> 📝 **Catatan:** Ganti `namaproject`, `namadatabase`, dan `NGROK_URL` sesuai kebutuhan.
 
 ---
 
-### 3. Instalasi Dependensi
+### 3️⃣ Instalasi Dependensi
 
 ```bash
 composer install
 composer update
 composer vendor-expose
 composer require dompdf/dompdf
-
 ```
 
 ---
 
-### 4. Setup Database
+### 4️⃣ Setup Database
 
-Buka browser:
+Buka di browser:
 
 ```
 http://localhost/namaproject/dev/build
@@ -91,13 +125,14 @@ http://localhost/namaproject/dev/build
 
 ---
 
-### 5. Login Admin Panel
+### 5️⃣ Login ke Admin Panel
 
 ```
 http://localhost/namaproject/admin
 ```
 
-Login dengan akun dari `.env`:
+Gunakan akun default:
+
 ```
 Username: admin
 Password: password
@@ -105,45 +140,73 @@ Password: password
 
 ---
 
-## 🌐 Ngrok (Testing URL Publik)
+<h2 id="ngrok">🌐 Ngrok (Testing URL Publik)</h2>
 
-Jika kamu ingin mengakses project dari luar atau untuk webhook, jalankan:
+Untuk menjalankan webhook atau testing online:
 
 ```bash
 ngrok http 80
 ```
 
-Ganti `SS_BASE_URL` dan `NGROK_URL` di `.env` dengan URL yang dihasilkan Ngrok.
+Kemudian ganti `SS_BASE_URL` dan `NGROK_URL` di file `.env` dengan URL hasil dari Ngrok.
 
 ---
 
-## 🧩 Struktur Umum Silverstripe
+<h2 id="struktur">🧩 Struktur Umum Silverstripe</h2>
 
-- `app/` - kode kustom seperti PageController, extensions, dan templates
-- `public/` - folder web root, berisi `index.php` dan file publik
-- `.env` - konfigurasi environment & API
-- `composer.json` - dependensi proyek
-
----
-
-## 🛠️ Tools yang Digunakan
-
-- [Silverstripe CMS](https://www.silverstripe.org/)
-- [Duitku Sandbox](https://docs.duitku.com/)
-- [Ngrok](https://ngrok.com/)
+| Folder/File     | Deskripsi                                  |
+| --------------- | ------------------------------------------ |
+| `app/`          | Kode kustom (controller, model, template)  |
+| `public/`       | Folder web root (`index.php`, file publik) |
+| `.env`          | Konfigurasi environment & API              |
+| `composer.json` | Dependensi proyek                          |
 
 ---
 
-## 🤝 Kontribusi
+<h2 id="tools">🛠️ Tools yang Digunakan</h2>
 
-Pull request dan kontribusi sangat dihargai! Pastikan untuk melakukan:
-
-- `composer lint`
-- Testing fungsi sebelum PR
-- Sertakan penjelasan pada setiap perubahan
+* [Silverstripe CMS](https://www.silverstripe.org/)
+* [Duitku Sandbox](https://docs.duitku.com/)
+* [Ngrok](https://ngrok.com/)
+* [Dompdf](https://github.com/dompdf/dompdf)
 
 ---
 
-## 📄 Lisensi
+<h2 id="kontribusi">🤝 Kontribusi</h2>
 
-Project ini menggunakan [BSD-3-Clause License](LICENSE).
+Kontribusi sangat dihargai!
+Pastikan untuk melakukan langkah berikut sebelum membuat Pull Request:
+
+* Jalankan `composer lint`
+* Uji fitur sebelum mengajukan PR
+* Tambahkan deskripsi perubahan secara jelas
+
+---
+
+<h2 id="lisensi">📄 Lisensi</h2>
+
+Project ini menggunakan lisensi **[BSD-3-Clause License](LICENSE)**.
+
+---
+
+**<p align="center">Made with ❤️ by [Your Name]</p>**
+
+```
+
+---
+
+### 📌 Keterangan:
+- Gambar preview diambil dari file `preview.png` yang kamu letakkan **di luar folder proyek tapi masih dalam repo**  
+  → Contoh struktur:
+```
+
+.
+├── preview.png
+├── public/
+├── app/
+├── composer.json
+└── README.md
+
+```
+- Ubah `username` dan `namaproject` dengan nama GitHub dan repo kamu agar badge otomatis berfungsi.
+---
