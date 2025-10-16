@@ -188,15 +188,3 @@ Project ini menggunakan lisensi **[BSD-3-Clause License](LICENSE)**.
 ```
 
 ---
-
-### 📌 Keterangan:
-- Gambar preview diambil dari file `preview.png` yang kamu letakkan **di luar folder proyek tapi masih dalam repo**  
-  → Contoh struktur:
-```
-
-.
-├── preview.png
-├── public/
-├── app/
-├── composer.json
-└── README.md
