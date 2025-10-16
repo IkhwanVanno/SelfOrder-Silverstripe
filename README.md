@@ -185,6 +185,4 @@ Project ini menggunakan lisensi **[BSD-3-Clause License](LICENSE)**.
 
 **<p align="center">Made with ❤️ by Ikhwan Vanno Handoyo</p>**
 
-```
-
 ---
