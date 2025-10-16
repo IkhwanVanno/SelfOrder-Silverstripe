@@ -35,6 +35,33 @@ class Payment extends DataObject
         'Updated' => 'Terakhir Diupdate',
     ];
 
+    private static $searchable_fields = [
+        'Reference' => [
+            'title' => 'Reference',
+            'filter' => 'PartialMatchFilter'
+        ],
+        'Order.NomorInvoice' => [
+            'title' => 'Nomor Invoice',
+            'filter' => 'PartialMatchFilter'
+        ],
+        'MetodePembayaran' => [
+            'title' => 'Metode Pemabayaran',
+            'filter' => 'PartialMatchFilter'
+        ],
+        'DuitkuTransactionID' => [
+            'title' => 'Duitku Tensaksi ID',
+            'filter' => 'PartialMatchFilter'
+        ],
+        'Status' => [
+            'title' => 'Status',
+            'filter' => 'ExactMatchFilter'
+        ],
+        'Created' => [
+            'title' => 'Tanggal Payment - Hingga Sekarang',
+            'filter' => 'GreaterThanOrEqualFilter',
+        ]
+    ];
+
     private static $default_sort = 'Created DESC';
 
     protected function onBeforeWrite()

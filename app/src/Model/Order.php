@@ -2,7 +2,6 @@
 
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Member;
-use SilverStripe\View\Requirements;
 
 class Order extends DataObject
 {
@@ -36,6 +35,25 @@ class Order extends DataObject
         'TotalHarga' => 'Total Harga',
         'Status' => 'Status',
         'Created' => 'Tanggal Order',
+    ];
+
+    private static $searchable_fields = [
+        'NomorMeja' => [
+            'title' => 'Nomor Meja',
+            'filter' => 'PartialMatchFilter'
+        ],
+        'NomorInvoice' => [
+            'title' => 'Nomor Invoice',
+            'filter' => 'PartialMatchFilter'
+        ],
+        'Status' => [
+            'title' => 'Status',
+            'filter' => 'ExactMatchFilter'
+        ],
+        'Created' => [
+            'title' => 'Tanggal Order - Hingga Sekarang',
+            'filter' => 'GreaterThanOrEqualFilter',
+        ]
     ];
 
     private static $default_sort = 'Created DESC';
