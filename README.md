@@ -9,10 +9,10 @@ Platform e-commerce sederhana berbasis <a href="https://www.silverstripe.org/" t
 </h4>
 
 <p align="center">
-	<img src="https://img.shields.io/github/stars/username/namaproject?style=flat-square">
-	<img src="https://img.shields.io/github/forks/username/namaproject?style=flat-square">
-	<img src="https://img.shields.io/github/issues/username/namaproject?style=flat-square">
-	<img src="https://img.shields.io/github/license/username/namaproject?style=flat-square">
+	<img src="https://img.shields.io/github/stars/IkhwanVanno/SelfOrder-Silverstripe?style=flat-square">
+	<img src="https://img.shields.io/github/forks/IkhwanVanno/SelfOrder-Silverstripe?style=flat-square">
+	<img src="https://img.shields.io/github/issues/IkhwanVanno/SelfOrder-Silverstripe?style=flat-square">
+	<img src="https://img.shields.io/github/license/IkhwanVanno/SelfOrder-Silverstripe?style=flat-square">
 </p>
 
 <p align="center">
@@ -50,7 +50,7 @@ Aplikasi ini cocok untuk restoran, kafe, atau toko kecil yang ingin sistem pemes
 
 ### 1️⃣ Clone Repository
 ```bash
-git clone https://github.com/username/namaproject.git
+git clone https://github.com/IkhwanVanno/SelfOrder-Silverstripe.git
 cd namaproject
 ````
 
@@ -183,7 +183,7 @@ Project ini menggunakan lisensi **[BSD-3-Clause License](LICENSE)**.
 
 ---
 
-**<p align="center">Made with ❤️ by [Your Name]</p>**
+**<p align="center">Made with ❤️ by Ikhwan Vanno Handoyo</p>**
 
 ```
 
@@ -200,7 +200,3 @@ Project ini menggunakan lisensi **[BSD-3-Clause License](LICENSE)**.
 ├── app/
 ├── composer.json
 └── README.md
-
-```
-- Ubah `username` dan `namaproject` dengan nama GitHub dan repo kamu agar badge otomatis berfungsi.
----
