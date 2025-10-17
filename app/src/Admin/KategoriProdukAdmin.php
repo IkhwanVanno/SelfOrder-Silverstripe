@@ -12,5 +12,5 @@ class KategoriProdukAdmin extends ModelAdmin
 
     private static $menu_title = 'Kategori Produk';
 
-    private static $menu_icon_class = 'font-icon-list';
+    private static $menu_icon_class = 'font-icon-tree';
 }

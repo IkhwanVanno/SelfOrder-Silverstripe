@@ -12,5 +12,5 @@ class ProdukAdmin extends ModelAdmin
 
     private static $menu_title = 'Produk';
 
-    private static $menu_icon_class = 'font-icon-list';
+    private static $menu_icon_class = 'font-icon-cart';
 }

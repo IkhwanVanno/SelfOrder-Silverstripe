@@ -14,6 +14,8 @@ class OrderAdmin extends ModelAdmin
 
     private static $menu_title = 'Orders';
 
+    private static $menu_icon_class = "font-icon-clipboard-pencil";
+
     public function getEditForm($id = null, $fields = null)
     {
         $form = parent::getEditForm($id, $fields);
