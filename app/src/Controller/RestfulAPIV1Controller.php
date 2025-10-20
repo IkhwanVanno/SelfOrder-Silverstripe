@@ -97,6 +97,10 @@ class RestfulAPIController extends Controller
                 'products' => [
                     'GET /api/products' => 'Get all products',
                     'GET /api/products?category_id=x' => 'Get products by category',
+                    'GET /api/products?filter=populer' => 'Get products sorted by popularity',
+                    'GET /api/products?filter=harga_terendah' => 'Get products sorted by lowest price',
+                    'GET /api/products?filter=harga_tertinggi' => 'Get products sorted by highest price',
+                    'GET /api/products?category_id=x&filter=harga_terendah' => 'Combine category and price filter',
                     'GET /api/products/{id}' => 'Get single product',
                 ],
                 'categories' => [
@@ -111,18 +115,18 @@ class RestfulAPIController extends Controller
                 'orders' => [
                     'GET /api/orders' => 'Get all orders',
                     'GET /api/orders/{id}' => 'Get single order',
-                    'GET /tes/orders/{id}/pdf' => 'download PDF Invoice',
+                    'GET /api/orders/{id}/pdf' => 'Download PDF Invoice',
                     'POST /api/orders' => 'Create new order',
-                    'POST /tes/orders/{id}/send-email' => 'Send Invoice to Email User',
+                    'POST /api/orders/{id}/send-email' => 'Send Invoice to Email User',
                 ],
                 'payment' => [
                     'POST /api/payment' => 'Create payment',
                 ],
                 'paymentmethods' => [
-                    'POST /api/paymentmethods' => 'Payment Methods',
+                    'POST /api/paymentmethods' => 'Get payment methods',
                 ],
                 'forgotpassword' => [
-                    'POST /api/forgotpassword' => 'Forgot Password'
+                    'POST /api/forgotpassword' => 'Forgot password'
                 ],
             ],
         ]);
@@ -415,14 +419,55 @@ class RestfulAPIController extends Controller
         }
 
         $categoryId = $request->getVar('category_id');
-        $products = Produk::get();
+        $filter = $request->getVar('filter');
+        $page = (int) $request->getVar('page') ?: 1;
+        $limit = (int) $request->getVar('limit') ?: 6;
 
+        $products = Produk::get();
         if ($categoryId) {
             $products = $products->filter('KategoriID', $categoryId);
         }
 
+        if ($filter) {
+            switch ($filter) {
+                case 'harga_tertinggi':
+                    $products = $products->sort('Harga DESC');
+                    break;
+                case 'harga_terendah':
+                    $products = $products->sort('Harga ASC');
+                    break;
+                case 'populer':
+                    $productIds = $products->column('ID');
+
+                    if (!empty($productIds)) {
+                        $records = OrderItem::get()->filter('ProdukID', $productIds);
+                        $produkCounts = [];
+
+                        foreach ($productIds as $id) {
+                            $produkCounts[$id] = 0;
+                        }
+
+                        foreach ($records as $item) {
+                            $produkID = $item->ProdukID;
+                            if (isset($produkCounts[$produkID])) {
+                                $produkCounts[$produkID] += $item->Kuantitas;
+                            }
+                        }
+
+                        arsort($produkCounts);
+                        $sortedIds = array_keys($produkCounts);
+                        $products = $products->filter('ID', $sortedIds);
+                    }
+                    break;
+            }
+        }
+
+        $total = $products->count();
+        $offset = ($page - 1) * $limit;
+        $pageProducts = $products->limit($limit, $offset);
+
         $data = [];
-        foreach ($products as $product) {
+        foreach ($pageProducts as $product) {
             $data[] = [
                 'id' => $product->ID,
                 'nama' => $product->Nama,
@@ -435,9 +480,18 @@ class RestfulAPIController extends Controller
             ];
         }
 
+        $totalPages = ceil($total / $limit);
+
         return $this->jsonResponse([
             'success' => true,
-            'data' => $data
+            'message' => "Daftar produk halaman $page",
+            'data' => $data,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $limit,
+                'total' => $total,
+                '$total_pages' => $totalPages,
+            ]
         ]);
     }
 
@@ -549,9 +603,6 @@ class RestfulAPIController extends Controller
             if ($existingItem) {
                 $existingItem->Kuantitas += $kuantitas;
                 $existingItem->Kuantitas = max(1, $existingItem->Kuantitas);
-                if ($existingItem->Kuantitas > $produk->Stok) {
-                    $existingItem->Kuantitas = $produk->Stok;
-                }
                 $existingItem->write();
                 $cartItem = $existingItem;
             } else {
