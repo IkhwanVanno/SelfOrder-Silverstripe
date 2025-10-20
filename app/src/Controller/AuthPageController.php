@@ -83,13 +83,13 @@ class AuthPageController extends PageController
 
         try {
             $config = $this->getGoogleConfig();
-            $tokenData = $this->getGoogleAccessToken($code, $config);
+            $tokenData = $this->AuthService->getGoogleAccessToken($code, $config);
 
             if (!isset($tokenData['access_token'])) {
                 throw new \Exception('Failed to get access token');
             }
 
-            $userInfo = $this->getGoogleUserInfo($tokenData['access_token'], $config);
+            $userInfo = $this->AuthService->getGoogleUserInfo($tokenData['access_token'], $config);
 
             if (!isset($userInfo['email'])) {
                 throw new \Exception('Failed to get user email');
@@ -141,52 +141,6 @@ class AuthPageController extends PageController
             ]);
             return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
         }
-    }
-    private function getGoogleAccessToken($code, $config)
-    {
-        $postData = [
-            'code' => $code,
-            'client_id' => $config['client_id'],
-            'client_secret' => $config['client_secret'],
-            'redirect_uri' => $config['redirect_uri'],
-            'grant_type' => 'authorization_code'
-        ];
-
-        $ch = curl_init($config['token_url']);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For local development
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            throw new \Exception('Failed to exchange code for token. HTTP Code: ' . $httpCode);
-        }
-
-        return json_decode($response, true);
-    }
-
-    private function getGoogleUserInfo($accessToken, $config)
-    {
-        $ch = curl_init($config['userinfo_url']);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' . $accessToken
-        ]);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For local development
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            throw new \Exception('Failed to get user info. HTTP Code: ' . $httpCode);
-        }
-
-        return json_decode($response, true);
     }
 
     // === Manual Authentication ===

@@ -21,7 +21,6 @@ class RestfulAPIController extends Controller
         'logout',
         'googleAuth',
         'member',
-        'updateMember',
         'updatePassword',
         'siteconfig',
         'products',

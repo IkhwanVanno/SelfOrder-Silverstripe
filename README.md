@@ -85,16 +85,13 @@ DUITKU_API_KEY=
 DUITKU_GETPAYMENTMETHOD_URL=
 DUITKU_BASE_URL=
 
-# Ngrok
-NGROK_URL=https://ngrok_url/MetroShoppingG
-
 # Proxy Fix
 SS_TRUSTED_PROXY_IPS="*"
 SS_TRUSTED_PROXY_PROTOCOL_HEADER="X-Forwarded-Proto"
 SS_TRUSTED_PROXY_HOST_HEADER="X-Forwarded-Host"
 ```
 
-> 📝 **Catatan:** Ganti `namaproject`, `namadatabase`, dan `NGROK_URL` sesuai kebutuhan.
+> 📝 **Catatan:** Ganti `namaproject`, dan `namadatabase` sesuai kebutuhan.
 
 ---
 
@@ -142,7 +139,7 @@ Untuk menjalankan webhook atau testing online:
 ngrok http 80
 ```
 
-Kemudian ganti `SS_BASE_URL` dan `NGROK_URL` di file `.env` dengan URL hasil dari Ngrok.
+Kemudian ganti `SS_BASE_URL` di file `.env` dengan URL hasil dari Ngrok.
 
 ---
 

@@ -105,6 +105,54 @@ class AuthService
         return $result;
     }
 
+    // === Google Auth Service ===
+    public function getGoogleAccessToken($code, $config)
+    {
+        $postData = [
+            'code' => $code,
+            'client_id' => $config['client_id'],
+            'client_secret' => $config['client_secret'],
+            'redirect_uri' => $config['redirect_uri'],
+            'grant_type' => 'authorization_code'
+        ];
+
+        $ch = curl_init($config['token_url']);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For local development
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            throw new \Exception('Failed to exchange code for token. HTTP Code: ' . $httpCode);
+        }
+
+        return json_decode($response, true);
+    }
+
+    public function getGoogleUserInfo($accessToken, $config)
+    {
+        $ch = curl_init($config['userinfo_url']);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $accessToken
+        ]);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For local development
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            throw new \Exception('Failed to get user info. HTTP Code: ' . $httpCode);
+        }
+
+        return json_decode($response, true);
+    }
+
     // === Forgot Password Service ===
     public function processForgotPassword(HTTPRequest $request, $emailParam = null)
     {
@@ -134,7 +182,7 @@ class AuthService
             $user->ResetPasswordExpiry = date('Y-m-d H:i:s', time() + 3600);
             $user->write();
 
-            $ngrokUrl = Environment::getEnv('NGROK_URL') ?: Director::absoluteBaseURL();
+            $ngrokUrl = Environment::getEnv('SS_BASE_URL') ?: Director::absoluteBaseURL();
             $SiteConfig = SiteConfig::current_site_config();
             $CompanyEmail = $SiteConfig->Email ?: 'noreply@' . $_SERVER['HTTP_HOST'];
 
