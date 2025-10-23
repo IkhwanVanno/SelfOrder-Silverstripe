@@ -15,6 +15,7 @@ class CustomSiteConfig extends DataExtension
         "Address" => "Text",
         "CompanyName" => "Varchar(255)",
         "Credit" => "Varchar(255)",
+        "BiayaReservasi" => "Double"
     ];
     private static $has_one = [
         'Logo' => Image::class,
@@ -30,5 +31,6 @@ class CustomSiteConfig extends DataExtension
         $fields->addFieldToTab('Root.Main', TextField::create('Address', 'Alamat Perusahaan'));
         $fields->addFieldToTab('Root.Main', TextField::create('Credit', 'Credit Footer'));
         $fields->addFieldToTab('Root.Main', UploadField::create('Logo', 'Logo Perusahaan'));
+        $fields->addFieldToTab('Root.Main', TextField::create('BiayaReservasi', 'Biaya Reservasi/Jam'));
     }
 }
