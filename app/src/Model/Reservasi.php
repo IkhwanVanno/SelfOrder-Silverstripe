@@ -12,7 +12,7 @@ class Reservasi extends DataObject
         'JumlahKursi' => 'Int',
         'TotalHarga' => 'Double',
         'WaktuMulai' => 'Datetime',
-        'waktuSelesai' => 'Datetime',
+        'WaktuSelesai' => 'Datetime',
         'Status' => "Enum('MenungguPersetujuan,Disetujui,Ditolak,MenungguPembayaran,Selesai,Dibatalkan','MenungguPersetujuan')",
         'Catatan' => 'Text',
         'ResponsAdmin' => 'Text',
