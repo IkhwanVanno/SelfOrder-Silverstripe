@@ -32,6 +32,14 @@ class RestfulAPIController extends Controller
         'order',
         'createOrder',
         'payment',
+        'reservations',
+        'reservationDetail',
+        'createReservation',
+        'cancelReservation',
+        'paymentReservation',
+        'downloadReservationPDF',
+        'sendReservationEmail',
+        'reservationPaymentMethods',
         'paymentmethods',
         'downloadInvoiceAPI',
         'sendInvoiceAPI',
@@ -56,6 +64,13 @@ class RestfulAPIController extends Controller
         'orders/$ID!' => 'order',
         'orders' => 'orders',
         'payment' => 'payment',
+        'reservations/$ID/pdf' => 'downloadReservationPDF',
+        'reservations/$ID/send-email' => 'sendReservationEmail',
+        'reservations/$ID/payment' => 'paymentReservation',
+        'reservations/$ID/cancel' => 'cancelReservation',
+        'reservations/$ID!' => 'reservationDetail',
+        'reservations' => 'reservations',
+        'reservationpaymentmethods' => 'reservationPaymentMethods',
         'paymentmethods' => 'paymentmethods',
         'forgotpassword' => 'forgotpassword',
         '' => 'index',
@@ -118,6 +133,16 @@ class RestfulAPIController extends Controller
                     'POST /api/orders' => 'Create new order',
                     'POST /api/orders/{id}/send-email' => 'Send Invoice to Email User',
                 ],
+                'reservations' => [
+                    'GET /api/reservations' => 'Get all user reservations',
+                    'GET /api/reservations/{id}' => 'Get single reservation',
+                    'POST /api/reservations' => 'Create new reservation',
+                    'POST /api/reservations/{id}/cancel' => 'Cancel reservation',
+                    'POST /api/reservations/{id}/payment' => 'Process reservation payment',
+                    'GET /api/reservations/{id}/pdf' => 'Download reservation receipt PDF',
+                    'POST /api/reservations/{id}/send-email' => 'Send reservation receipt to email',
+                    'POST /api/reservationpaymentmethods' => 'Get payment methods for reservation',
+                ],
                 'payment' => [
                     'POST /api/payment' => 'Create payment',
                 ],
@@ -134,6 +159,7 @@ class RestfulAPIController extends Controller
     // ========== AUTHENTICATION ==========
     // * GOOGLE AUTH *
     // * Firebase *
+    
     public function googleAuth(HTTPRequest $request)
     {
         if (!$request->isPOST()) {
@@ -954,6 +980,310 @@ class RestfulAPIController extends Controller
         }
     }
 
+    //  * RESERVATION *
+    public function reservations(HTTPRequest $request)
+    {
+        $member = $this->requireAuth();
+        if ($member instanceof HTTPResponse) {
+            return $member;
+        }
+
+        if ($request->isGET()) {
+            $reservasiService = new ReservasiService();
+            $reservasiService->checkExpiredReservations();
+
+            $reservations = Reservasi::get()
+                ->filter('MemberID', $member->ID)
+                ->sort('Created DESC');
+
+            $data = [];
+            foreach ($reservations as $reservasi) {
+                $data[] = [
+                    'id' => $reservasi->ID,
+                    'nama_reservasi' => $reservasi->NamaReservasi,
+                    'jumlah_kursi' => $reservasi->JumlahKursi,
+                    'total_harga' => $reservasi->TotalHarga,
+                    'formatted_total' => $reservasi->getFormattedTotal(),
+                    'waktu_mulai' => $reservasi->WaktuMulai,
+                    'waktu_selesai' => $reservasi->WaktuSelesai,
+                    'formatted_waktu_mulai' => $reservasi->getFormattedWaktuMulai(),
+                    'formatted_waktu_selesai' => $reservasi->getFormattedWaktuSelesai(),
+                    'status' => $reservasi->Status,
+                    'status_label' => $reservasi->getStatusLabel(),
+                    'status_color' => $reservasi->getStatusColor(),
+                    'catatan' => $reservasi->Catatan,
+                    'respons_admin' => $reservasi->ResponsAdmin,
+                    'created' => $reservasi->Created,
+                    'payment' => $reservasi->PaymentReservasi()->exists() ? [
+                        'id' => $reservasi->PaymentReservasi()->ID,
+                        'reference' => $reservasi->PaymentReservasi()->Reference,
+                        'total_harga' => $reservasi->PaymentReservasi()->TotalHarga,
+                        'status' => $reservasi->PaymentReservasi()->Status,
+                        'status_label' => $reservasi->PaymentReservasi()->getStatusLabel(),
+                        'metode_pembayaran' => $reservasi->PaymentReservasi()->MetodePembayaran,
+                        'payment_url' => $reservasi->PaymentReservasi()->PaymentUrl,
+                        'expiry_time' => $reservasi->PaymentReservasi()->ExpiryTime,
+                        'formatted_expiry_time' => $reservasi->PaymentReservasi()->getFormattedExpiryTime(),
+                    ] : null
+                ];
+            }
+
+            return $this->jsonResponse([
+                'success' => true,
+                'data' => $data,
+                'count' => count($data)
+            ]);
+        }
+
+        if ($request->isPOST()) {
+            return $this->createReservation($request);
+        }
+
+        return $this->jsonResponse(['error' => 'Method not allowed'], 405);
+    }
+
+    public function reservationDetail(HTTPRequest $request)
+    {
+        if (!$request->isGET()) {
+            return $this->jsonResponse(['error' => 'Only GET method allowed'], 405);
+        }
+
+        $member = $this->requireAuth();
+        if ($member instanceof HTTPResponse) {
+            return $member;
+        }
+
+        $id = $request->param('ID');
+        $reservasi = Reservasi::get()->filter([
+            'ID' => $id,
+            'MemberID' => $member->ID
+        ])->first();
+
+        if (!$reservasi) {
+            return $this->jsonResponse(['error' => 'Reservation not found'], 404);
+        }
+
+        return $this->jsonResponse([
+            'success' => true,
+            'data' => [
+                'id' => $reservasi->ID,
+                'nama_reservasi' => $reservasi->NamaReservasi,
+                'jumlah_kursi' => $reservasi->JumlahKursi,
+                'total_harga' => $reservasi->TotalHarga,
+                'formatted_total' => $reservasi->getFormattedTotal(),
+                'waktu_mulai' => $reservasi->WaktuMulai,
+                'waktu_selesai' => $reservasi->WaktuSelesai,
+                'formatted_waktu_mulai' => $reservasi->getFormattedWaktuMulai(),
+                'formatted_waktu_selesai' => $reservasi->getFormattedWaktuSelesai(),
+                'status' => $reservasi->Status,
+                'status_label' => $reservasi->getStatusLabel(),
+                'status_color' => $reservasi->getStatusColor(),
+                'catatan' => $reservasi->Catatan,
+                'respons_admin' => $reservasi->ResponsAdmin,
+                'created' => $reservasi->Created,
+                'payment' => $reservasi->PaymentReservasi()->exists() ? [
+                    'id' => $reservasi->PaymentReservasi()->ID,
+                    'reference' => $reservasi->PaymentReservasi()->Reference,
+                    'total_harga' => $reservasi->PaymentReservasi()->TotalHarga,
+                    'formatted_total' => $reservasi->PaymentReservasi()->getFormattedTotal(),
+                    'status' => $reservasi->PaymentReservasi()->Status,
+                    'status_label' => $reservasi->PaymentReservasi()->getStatusLabel(),
+                    'metode_pembayaran' => $reservasi->PaymentReservasi()->MetodePembayaran,
+                    'payment_url' => $reservasi->PaymentReservasi()->PaymentUrl,
+                    'expiry_time' => $reservasi->PaymentReservasi()->ExpiryTime,
+                    'formatted_expiry_time' => $reservasi->PaymentReservasi()->getFormattedExpiryTime(),
+                    'is_expired' => $reservasi->PaymentReservasi()->isExpired(),
+                ] : null
+            ]
+        ]);
+    }
+
+    public function createReservation(HTTPRequest $request)
+    {
+        if (!$request->isPOST()) {
+            return $this->jsonResponse(['error' => 'Only POST method allowed'], 405);
+        }
+
+        $member = $this->requireAuth();
+        if ($member instanceof HTTPResponse) {
+            return $member;
+        }
+
+        $data = json_decode($request->getBody(), true);
+
+        if (
+            empty($data['nama_reservasi']) ||
+            empty($data['jumlah_kursi']) ||
+            empty($data['waktu_mulai']) ||
+            empty($data['waktu_selesai'])
+        ) {
+            return $this->jsonResponse([
+                'error' => 'All fields are required',
+                'required_fields' => ['nama_reservasi', 'jumlah_kursi', 'waktu_mulai', 'waktu_selesai']
+            ], 400);
+        }
+
+        $reservasiData = [
+            'NamaReservasi' => $data['nama_reservasi'],
+            'JumlahKursi' => (int) $data['jumlah_kursi'],
+            'WaktuMulai' => $data['waktu_mulai'],
+            'WaktuSelesai' => $data['waktu_selesai'],
+            'Catatan' => $data['catatan'] ?? ''
+        ];
+
+        $reservasiService = new ReservasiService();
+        $result = $reservasiService->createReservasi($reservasiData);
+
+        if ($result['success']) {
+            $reservasi = $result['reservasi'];
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => $result['message'],
+                'data' => [
+                    'id' => $reservasi->ID,
+                    'nama_reservasi' => $reservasi->NamaReservasi,
+                    'jumlah_kursi' => $reservasi->JumlahKursi,
+                    'total_harga' => $reservasi->TotalHarga,
+                    'formatted_total' => $reservasi->getFormattedTotal(),
+                    'waktu_mulai' => $reservasi->WaktuMulai,
+                    'waktu_selesai' => $reservasi->WaktuSelesai,
+                    'status' => $reservasi->Status,
+                    'status_label' => $reservasi->getStatusLabel(),
+                    'catatan' => $reservasi->Catatan,
+                ]
+            ], 201);
+        }
+
+        return $this->jsonResponse([
+            'success' => false,
+            'error' => $result['message']
+        ], 400);
+    }
+
+    public function cancelReservation(HTTPRequest $request)
+    {
+        if (!$request->isPOST()) {
+            return $this->jsonResponse(['error' => 'Only POST method allowed'], 405);
+        }
+
+        $member = $this->requireAuth();
+        if ($member instanceof HTTPResponse) {
+            return $member;
+        }
+
+        $id = $request->param('ID');
+        if (!$id) {
+            return $this->jsonResponse(['error' => 'Reservation ID is required'], 400);
+        }
+
+        $reservasiService = new ReservasiService();
+        $result = $reservasiService->cancelReservasi($id);
+
+        if ($result['success']) {
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => $result['message']
+            ]);
+        }
+
+        return $this->jsonResponse([
+            'success' => false,
+            'error' => $result['message']
+        ], 400);
+    }
+
+    public function paymentReservation(HTTPRequest $request)
+    {
+        if (!$request->isPOST()) {
+            return $this->jsonResponse(['error' => 'Only POST method allowed'], 405);
+        }
+
+        $member = $this->requireAuth();
+        if ($member instanceof HTTPResponse) {
+            return $member;
+        }
+
+        $id = $request->param('ID');
+        $data = json_decode($request->getBody(), true);
+
+        if (!$id || !isset($data['payment_method'])) {
+            return $this->jsonResponse([
+                'error' => 'Reservation ID and payment method are required'
+            ], 400);
+        }
+
+        $reservasi = Reservasi::get()->filter([
+            'ID' => $id,
+            'MemberID' => $member->ID
+        ])->first();
+
+        if (!$reservasi) {
+            return $this->jsonResponse(['error' => 'Reservation not found'], 404);
+        }
+
+        if ($reservasi->Status != 'Disetujui') {
+            return $this->jsonResponse([
+                'error' => 'Reservation must be approved before payment',
+                'current_status' => $reservasi->Status
+            ], 400);
+        }
+
+        // Get payment fee
+        $paymentService = new PaymentService();
+        $paymentFee = $paymentService->getPaymentFee($data['payment_method'], $reservasi->TotalHarga);
+        $totalAmount = $reservasi->TotalHarga + $paymentFee;
+
+        // Create payment record
+        $payment = PaymentReservasi::create();
+        $payment->Reference = 'RSV-' . date('YmdHis') . '-' . $reservasi->ID;
+        $payment->TotalHarga = $totalAmount;
+        $payment->MetodePembayaran = $paymentService->getPaymentMethodName($data['payment_method']);
+        $payment->Status = 'Pending';
+        $payment->write();
+
+        // Update reservation
+        $reservasi->PaymentReservasiID = $payment->ID;
+        $reservasi->Status = 'MenungguPembayaran';
+        $reservasi->write();
+
+        // Create Duitku payment
+        $paymentUrl = $paymentService->createDuitkuPaymentReservasi(
+            $payment,
+            $data['payment_method'],
+            $reservasi->TotalHarga,
+            $member,
+            $reservasi
+        );
+
+        if (!$paymentUrl) {
+            return $this->jsonResponse([
+                'error' => 'Failed to create payment. Please try again.'
+            ], 500);
+        }
+
+        return $this->jsonResponse([
+            'success' => true,
+            'message' => 'Payment created successfully',
+            'data' => [
+                'payment' => [
+                    'id' => $payment->ID,
+                    'reference' => $payment->Reference,
+                    'total_harga' => $payment->TotalHarga,
+                    'formatted_total' => $payment->getFormattedTotal(),
+                    'metode_pembayaran' => $payment->MetodePembayaran,
+                    'status' => $payment->Status,
+                    'payment_url' => $paymentUrl,
+                    'expiry_time' => $payment->ExpiryTime,
+                ],
+                'reservation' => [
+                    'id' => $reservasi->ID,
+                    'status' => $reservasi->Status,
+                    'status_label' => $reservasi->getStatusLabel(),
+                ]
+            ]
+        ]);
+    }
+
     // ========== Feature/Methods Etc ==========
     public function downloadInvoiceAPI(HTTPRequest $request)
     {
@@ -1023,6 +1353,164 @@ class RestfulAPIController extends Controller
                     'error' => 'No payment methods available',
                     'data' => []
                 ], 200);
+            }
+
+            $formattedMethods = [];
+            foreach ($paymentMethods as $method) {
+                $formattedMethods[] = [
+                    'paymentMethod' => $method['paymentMethod'],
+                    'paymentName' => $method['paymentName'],
+                    'paymentImage' => $method['paymentImage'] ?? '',
+                    'totalFee' => $method['totalFee'] ?? 0,
+                    'paymentGroup' => $method['paymentGroup'] ?? 'other'
+                ];
+            }
+
+            return $this->jsonResponse([
+                'success' => true,
+                'data' => $formattedMethods,
+                'count' => count($formattedMethods)
+            ]);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse([
+                'error' => 'Failed to fetch payment methods',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function downloadReservationPDF(HTTPRequest $request)
+    {
+        if (!$request->isGET()) {
+            return $this->jsonResponse(['error' => 'Only GET method allowed'], 405);
+        }
+
+        $member = $this->requireAuth();
+        if ($member instanceof HTTPResponse) {
+            return $member;
+        }
+
+        $id = $request->param('ID');
+        if (!$id) {
+            return $this->jsonResponse(['error' => 'Reservation ID is required'], 400);
+        }
+
+        $reservasi = Reservasi::get()->filter([
+            'ID' => $id,
+            'MemberID' => $member->ID
+        ])->first();
+
+        if (!$reservasi) {
+            return $this->jsonResponse(['error' => 'Reservation not found'], 404);
+        }
+
+        if ($reservasi->Status != 'Selesai') {
+            return $this->jsonResponse([
+                'error' => 'Receipt is only available for completed reservations'
+            ], 400);
+        }
+
+        $reservasiService = new ReservasiService();
+        $result = $reservasiService->downloadReceipt($id);
+
+        if (!$result['success']) {
+            return $this->jsonResponse([
+                'error' => $result['message']
+            ], 500);
+        }
+
+        // Return PDF as base64 for API consumption
+        $pdfBase64 = base64_encode($result['content']);
+
+        return $this->jsonResponse([
+            'success' => true,
+            'data' => [
+                'reservation_id' => $reservasi->ID,
+                'nama_reservasi' => $reservasi->NamaReservasi,
+                'filename' => $result['filename'],
+                'pdf_base64' => $pdfBase64
+            ]
+        ]);
+    }
+
+    public function sendReservationEmail(HTTPRequest $request)
+    {
+        if (!$request->isPOST()) {
+            return $this->jsonResponse(['error' => 'Only POST method allowed'], 405);
+        }
+
+        $member = $this->requireAuth();
+        if ($member instanceof HTTPResponse) {
+            return $member;
+        }
+
+        $id = $request->param('ID');
+        if (!$id) {
+            return $this->jsonResponse(['error' => 'Reservation ID is required'], 400);
+        }
+
+        $reservasi = Reservasi::get()->filter([
+            'ID' => $id,
+            'MemberID' => $member->ID
+        ])->first();
+
+        if (!$reservasi) {
+            return $this->jsonResponse(['error' => 'Reservation not found'], 404);
+        }
+
+        if ($reservasi->Status != 'Selesai') {
+            return $this->jsonResponse([
+                'error' => 'Receipt email can only be sent for completed reservations'
+            ], 400);
+        }
+
+        $reservasiService = new ReservasiService();
+        $result = $reservasiService->sendReservationReceipt($reservasi);
+
+        if ($result['success']) {
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => $result['message']
+            ]);
+        }
+
+        return $this->jsonResponse([
+            'success' => false,
+            'error' => $result['message']
+        ], 500);
+    }
+
+    public function reservationPaymentMethods(HTTPRequest $request)
+    {
+        if (!$request->isPOST()) {
+            return $this->jsonResponse(['error' => 'Only POST method allowed'], 405);
+        }
+
+        $member = $this->requireAuth();
+        if ($member instanceof HTTPResponse) {
+            return $member;
+        }
+
+        $data = json_decode($request->getBody(), true);
+        $amount = $data['amount'] ?? null;
+
+        if (!$amount || !is_numeric($amount)) {
+            return $this->jsonResponse([
+                'error' => 'Valid amount parameter is required'
+            ], 400);
+        }
+
+        try {
+            $paymentService = new PaymentService();
+            $paymentMethods = $paymentService->getPaymentMethods((int) $amount);
+
+            if (empty($paymentMethods)) {
+                return $this->jsonResponse([
+                    'success' => true,
+                    'data' => [],
+                    'message' => 'No payment methods available'
+                ]);
             }
 
             $formattedMethods = [];

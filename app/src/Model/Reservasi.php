@@ -29,7 +29,7 @@ class Reservasi extends DataObject
         'JumlahKursi' => 'Jumlah Kursi',
         'TotalHarga' => 'Total Harga Reservasi',
         'WaktuMulai' => 'Waktu Mulai',
-        'waktuSelesai' => 'Waktu Selesai',
+        'WaktuSelesai' => 'Waktu Selesai',
         'Status' => 'Status Reservasi',
         'Catatan' => 'Tambahan',
     ];
@@ -52,8 +52,8 @@ class Reservasi extends DataObject
 
     public function getFormattedWaktuSelesai()
     {
-        if ($this->waktuSelesai) {
-            $date = new DateTime($this->waktuSelesai);
+        if ($this->WaktuSelesai) {
+            $date = new DateTime($this->WaktuSelesai);
             return $date->format('d/m/Y H:i');
         }
         return '-';

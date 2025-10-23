@@ -70,7 +70,7 @@ class ReservasiService
             $reservasi->NamaReservasi = $data['NamaReservasi'];
             $reservasi->JumlahKursi = $data['JumlahKursi'];
             $reservasi->WaktuMulai = $data['WaktuMulai'];
-            $reservasi->waktuSelesai = $data['WaktuSelesai'];
+            $reservasi->WaktuSelesai = $data['WaktuSelesai'];
             $reservasi->TotalHarga = $totalHarga;
             $reservasi->Catatan = $data['Catatan'] ?? '';
             $reservasi->Status = 'MenungguPersetujuan';
@@ -283,7 +283,7 @@ class ReservasiService
 
         // Format tanggal dan waktu
         $waktuMulai = new DateTime($reservasi->WaktuMulai);
-        $waktuSelesai = new DateTime($reservasi->waktuSelesai);
+        $waktuSelesai = new DateTime($reservasi->WaktuSelesai);
 
         $reservationDate = $waktuMulai->format('d/m/Y');
         $startTime = $waktuMulai->format('d/m/Y H:i');

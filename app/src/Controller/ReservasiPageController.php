@@ -53,7 +53,7 @@ class ReservasiPageController extends PageController
     {
         if (!$this->isLoggedIn()) {
             $this->setFlashMessage('primary', 'Silahkan login terlebih dahulu.');
-            return $this->redirect(Director::absoluteBaseURL() . 'auth/login');
+            return $this->redirect(Director::absoluteBaseURL() . '/auth/login');
         }
 
         $user = Security::getCurrentUser();
