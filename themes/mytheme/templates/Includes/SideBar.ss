@@ -115,6 +115,13 @@
                     <span class="block md:hidden xl:block">Order</span>
                 </a>
             </div>
+            <div class="mt-4 gap-3">
+                <a href="$BaseHref/reservasi" 
+                class="flex items-center justify-center w-full bg-primary text-white font-bold py-4 px-4 rounded-xl hover:bg-primary/90 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group">
+                    <i class="fa-regular fa-calendar-days mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                    <span class="block md:hidden xl:block">Reservasi</span>
+                </a>
+            </div>
         </div>
     </div>
 </div>

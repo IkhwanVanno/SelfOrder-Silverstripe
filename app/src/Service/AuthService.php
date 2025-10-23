@@ -182,11 +182,11 @@ class AuthService
             $user->ResetPasswordExpiry = date('Y-m-d H:i:s', time() + 3600);
             $user->write();
 
-            $ngrokUrl = Environment::getEnv('SS_BASE_URL') ?: Director::absoluteBaseURL();
+            $baseUrl = Environment::getEnv('SS_BASE_URL') ?: Director::absoluteBaseURL();
             $SiteConfig = SiteConfig::current_site_config();
             $CompanyEmail = $SiteConfig->Email ?: 'noreply@' . $_SERVER['HTTP_HOST'];
 
-            $resetLink = rtrim($ngrokUrl, '/') . '/auth/resetpassword?token=' . $resetToken;
+            $resetLink = rtrim($baseUrl, '/') . '/auth/resetpassword?token=' . $resetToken;
 
             $email = Email::create()
                 ->setTo($user->Email)
