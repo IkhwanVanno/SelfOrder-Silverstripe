@@ -428,6 +428,7 @@ class RestfulAPIController extends Controller
             'companyname' => $siteconfig->CompanyName,
             'credit' => $siteconfig->Credit,
             'logo_url' => $siteconfig->Logo()->exists() ? $siteconfig->Logo()->getAbsoluteURL() : null,
+            'biayareservasi' => $siteconfig->BiayaReservasi,
         ];
 
         return $this->jsonResponse([
