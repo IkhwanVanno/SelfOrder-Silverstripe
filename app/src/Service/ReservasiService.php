@@ -353,13 +353,13 @@ class ReservasiService
 
         // Cek reservasi yang waktu mulainya sudah lewat tapi statusnya masih MenungguPembayaran
         $expiredReservations = Reservasi::get()->filter([
-            'Status' => 'MenungguPembayaran',
+            'Status' => 'MenungguPembayaran' || 'MenungguPersetujuan',
             'WaktuMulai:LessThan' => $now
         ]);
 
         foreach ($expiredReservations as $reservasi) {
             $reservasi->Status = 'Dibatalkan';
-            $reservasi->ResponsAdmin = 'Reservasi dibatalkan otomatis karena pembayaran melewati waktu mulai pada ' . date('d/m/Y H:i');
+            $reservasi->ResponsAdmin = 'Reservasi dibatalkan otomatis karena pembayaran/persetujuan melewati waktu mulai pada ' . date('d/m/Y H:i');
             $reservasi->write();
 
             // Update payment jika ada
