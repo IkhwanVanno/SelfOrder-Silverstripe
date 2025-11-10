@@ -168,12 +168,18 @@ class ReservasiService
 
         try {
             $emailData = $this->prepareReceiptData($reservasi, $user, $siteConfig);
+            $pdfContent = $this->generateReceiptPDF($reservasi, $user, $siteConfig);
+
+            $tmpFile = TEMP_FOLDER . '/Reservasi-' . $reservasi->NamaReservasi . '.pdf';
+            file_put_contents($tmpFile, $pdfContent);
 
             $email = Email::create()
                 ->setFrom($companyEmail)
                 ->setTo($user->Email)
                 ->setSubject('Tanda Terima Reservasi - ' . $reservasi->NamaReservasi)
                 ->setHTMLTemplate('ReservasiReciptEmail');
+
+            $email->addAttachment($tmpFile, alias: 'Reservasi-' . $reservasi->NamaReservasi . '.pdf', mime: 'application/pdf');
 
             // Attach logo jika ada
             if ($siteConfig->Logo && $siteConfig->Logo->exists()) {
