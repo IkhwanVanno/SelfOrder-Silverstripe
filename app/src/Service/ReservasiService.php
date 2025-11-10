@@ -350,15 +350,15 @@ class ReservasiService
     public function checkExpiredReservations()
     {
         $now = date('Y-m-d H:i:s');
-
-        // Cek reservasi yang waktu mulainya sudah lewat tapi statusnya masih MenungguPembayaran
-        $expiredReservations = Reservasi::get()->filter([
-            'Status' => 'MenungguPembayaran' || 'MenungguPersetujuan',
-            'WaktuMulai:LessThan' => $now
-        ]);
+        $expiredReservations = Reservasi::get()->filterAny([
+            'Status' => ['Disetujui', 'Menunggu persetujuan', 'Menunggu pembayaran']
+        ])
+            ->filter([
+                'WaktuMulai:LessThan' => $now
+            ]);
 
         foreach ($expiredReservations as $reservasi) {
-            $reservasi->Status = 'Dibatalkan';
+            $reservasi->Status = 'Ditolak';
             $reservasi->ResponsAdmin = 'Reservasi dibatalkan otomatis karena pembayaran/persetujuan melewati waktu mulai pada ' . date('d/m/Y H:i');
             $reservasi->write();
 

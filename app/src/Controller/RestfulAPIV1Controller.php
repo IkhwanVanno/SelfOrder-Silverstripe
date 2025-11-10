@@ -16,6 +16,7 @@ class RestfulAPIController extends Controller
 
     private static $allowed_actions = [
         'index',
+        'fcmToken',
         'login',
         'register',
         'logout',
@@ -47,6 +48,7 @@ class RestfulAPIController extends Controller
     ];
 
     private static $url_handlers = [
+        'fcm-token' => 'fcmToken',
         'login' => 'login',
         'register' => 'register',
         'logout' => 'logout',
@@ -157,9 +159,69 @@ class RestfulAPIController extends Controller
     }
 
     // ========== AUTHENTICATION ==========
+    // * FCMTOKEN *
+    public function fcmToken(HTTPRequest $request)
+    {
+        if (!$request->isPOST()) {
+            return $this->jsonResponse(['error' => 'Only POST method allowed'], 405);
+        }
+
+        $member = $this->requireAuth();
+        if ($member instanceof HTTPResponse) {
+            return $member;
+        }
+
+        $data = json_decode($request->getBody(), true);
+        $token = $data['token'] ?? null;
+        $deviceName = $data['device_name'] ?? 'Unknown Device';
+
+        if (!$token) {
+            return $this->jsonResponse(['error' => 'Token is required'], 400);
+        }
+
+        $existing = FCMToken::get()->filter([
+            'MemberID' => $member->ID,
+            'DeviceToken' => $token
+        ])->first();
+
+        if (!$existing) {
+            $fcm = FCMToken::create();
+            $fcm->DeviceToken = $token;
+            $fcm->DeviceName = $deviceName;
+            $fcm->MemberID = $member->ID;
+            $fcm->LastUsed = date('Y-m-d H:i:s');
+            $fcm->write();
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'FCM token saved successfully',
+                'data' => [
+                    'id' => $fcm->ID,
+                    'device_token' => $fcm->DeviceToken,
+                    'device_name' => $fcm->DeviceName,
+                    'last_used' => $fcm->LastUsed
+                ]
+            ], 201);
+        } else {
+            $existing->LastUsed = date('Y-m-d H:i:s');
+            $existing->DeviceName = $deviceName;
+            $existing->write();
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'FCM token updated successfully',
+                'data' => [
+                    'id' => $existing->ID,
+                    'device_token' => $existing->DeviceToken,
+                    'device_name' => $existing->DeviceName,
+                    'last_used' => $existing->LastUsed
+                ]
+            ]);
+        }
+    }
+
     // * GOOGLE AUTH *
     // * Firebase *
-    
     public function googleAuth(HTTPRequest $request)
     {
         if (!$request->isPOST()) {
@@ -244,7 +306,8 @@ class RestfulAPIController extends Controller
             'user' => [
                 'id' => $member->ID,
                 'email' => $member->Email,
-                'nama' => $member->FirstName . ' ' . $member->Surname,
+                'first_name' => $member->FirstName,
+                'surname' => $member->Surname,
             ]
         ]);
     }

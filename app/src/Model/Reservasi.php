@@ -36,6 +36,60 @@ class Reservasi extends DataObject
 
     private static $default_sort = 'Created DESC';
 
+    public function onAfterWrite()
+    {
+        parent::onAfterWrite();
+
+        if ($this->isChanged('Status')) {
+            $member = $this->Member();
+
+            if (!$member || !$member->exists()) {
+                return;
+            }
+
+            $tokens = FCMToken::get()
+                ->filter('MemberID', $member->ID)
+                ->column('DeviceToken');
+
+            if (!empty($tokens)) {
+                try {
+                    $fcm = new FCMService();
+                    $title = "Status Reservasi Diperbarui";
+                    $body = $this->getNotificationMessage();
+                    $data = [
+                        'type' => 'reservation',
+                        'reservation_id' => (string) $this->ID,
+                        'status' => $this->Status,
+                        'nama_reservasi' => $this->NamaReservasi
+                    ];
+
+                    $fcm->sendToDevices($tokens, $title, $body, $data);
+                } catch (Exception $e) {
+                    error_log('FCM notification failed: ' . $e->getMessage());
+                }
+            }
+        }
+    }
+
+    private function getNotificationMessage()
+    {
+        $statusMessages = [
+            'MenungguPersetujuan' => 'Reservasi Anda sedang menunggu persetujuan admin.',
+            'Disetujui' => 'Reservasi Anda telah disetujui! Silakan lakukan pembayaran.',
+            'Ditolak' => 'Mohon maaf, reservasi Anda ditolak.',
+            'MenungguPembayaran' => 'Silakan selesaikan pembayaran reservasi Anda.',
+            'Selesai' => 'Reservasi Anda telah selesai. Terima kasih!',
+            'Dibatalkan' => 'Reservasi Anda telah dibatalkan.'
+        ];
+
+        $message = $statusMessages[$this->Status] ?? 'Status reservasi Anda: ' . $this->Status;
+        if ($this->ResponsAdmin) {
+            $message .= ' Pesan admin: ' . $this->ResponsAdmin;
+        }
+
+        return $message;
+    }
+
     public function getFormattedTotal()
     {
         return 'Rp ' . number_format($this->TotalHarga, 0, ',', '.');

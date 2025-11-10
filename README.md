@@ -79,6 +79,10 @@ MAILER_DSN=""
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 
+# Firebase Configuration
+FCM_PROJECT_ID=""
+FCM_SERVICE_ACCOUNT_JSON=""
+
 # Duitku (Sandbox)
 DUITKU_MERCHANT_CODE=
 DUITKU_API_KEY=
@@ -102,6 +106,7 @@ composer install
 composer update
 composer vendor-expose
 composer require dompdf/dompdf
+composer require google/auth
 ```
 
 ---
