@@ -21,7 +21,7 @@
     border-color: #bee5eb;
 }
 </style>
-<main class="min-h-screen bg-light">
+<main class="min-h-screen bg-light p-6">
     <div class="max-w-6xl mx-auto">
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
             <!-- Header -->

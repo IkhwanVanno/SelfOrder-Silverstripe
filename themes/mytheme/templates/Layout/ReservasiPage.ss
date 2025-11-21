@@ -1,5 +1,5 @@
-<main class="min-h-screen bg-light">
-  <div class="p-6">
+<main class="min-h-screen bg-white p-6">
+  <div>
     <!-- Flash Message -->
     <% if $FlashMessage %>
     <div class="mb-4 p-4 rounded-lg 
@@ -12,7 +12,7 @@
     </div>
     <% end_if %>
 
-    <div class="w-full bg-white p-5 rounded-md shadow">
+    <div>
       <!-- Header dan Tombol -->
       <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
         <h1 class="text-2xl font-semibold text-gray-700">Daftar Reservasi</h1>
@@ -33,7 +33,7 @@
       <!-- Tabel Reservasi -->
       <div class="overflow-x-auto rounded-lg border border-gray-200">
         <table class="min-w-full text-sm text-left text-gray-700">
-          <thead class="bg-gray-100 text-gray-800 uppercase text-xs font-semibold">
+          <thead class="bg-primary text-white uppercase text-xs font-semibold">
             <tr>
               <th class="px-4 py-3">ID</th>
               <th class="px-4 py-3">Nama Reservasi</th>

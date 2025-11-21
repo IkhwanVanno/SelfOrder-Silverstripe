@@ -44,7 +44,7 @@
     </div>
 
     <!-- Konten -->
-    <div class="flex-1 bg-light p-6">
+    <div class="flex-1">
       $Layout
     </div>
 
