@@ -58,6 +58,55 @@ class Order extends DataObject
 
     private static $default_sort = 'Created DESC';
 
+    public function onAfterWrite()
+    {
+        parent::onAfterWrite();
+
+        if ($this->isChanged('Status')) {
+            $member = $this->Member();
+
+            if (!$member || !$member->exists()) {
+                return;
+            }
+
+            $tokens = FCMToken::get()
+                ->filter('MemberID', $member->ID)
+                ->column('DeviceToken');
+
+            if (!empty($tokens)) {
+                try {
+                    $fcm = new FCMService();
+                    $title = "Status Order Diperbarui";
+                    $body = $this->getNotificationMessage();
+                    $data = [
+                        'type' => 'order',
+                        'order_id' => $this->ID,
+                        'status' => $this->Status,
+                        'nomor_invoice' => $this->NomorInvoice
+                    ];
+
+                    $fcm->sendToDevices($tokens, $title, $body, $data);
+                } catch (Exception $e) {
+                    error_log('FCM notification failed: ' . $e->getMessage());
+                }
+            }
+        }
+    }
+
+    public function getNotificationMessage()
+    {
+        $statusMessages = [
+            'MenungguPembayaran' => 'Menunggu pembayaran Anda.',
+            'Dibatalkan' => 'Pesanan Anda telah dibatalkan.', 
+            'Antrean'=> 'Pesanan Anda sedang dalam antrean.',
+            'Proses' => 'Pesanan Anda sedang diproses.',
+            'Terkirim'=> 'Pesanan Anda sedang menuju meja anda',
+        ];
+
+        $message = $statusMessages[$this->Status] ?? 'Status order Anda: ' . $this->Status;
+        return $message;
+    }
+
     protected function onBeforeWrite()
     {
         parent::onBeforeWrite();
