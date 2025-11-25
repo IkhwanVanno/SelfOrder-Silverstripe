@@ -357,7 +357,7 @@ class ReservasiService
     {
         $now = date('Y-m-d H:i:s');
         $expiredReservations = Reservasi::get()->filterAny([
-            'Status' => ['Disetujui', 'Menunggu persetujuan', 'Menunggu pembayaran']
+            'Status' => ['Disetujui', 'MenungguPersetujuan', 'MenungguPembayaran']
         ])
             ->filter([
                 'WaktuMulai:LessThan' => $now
