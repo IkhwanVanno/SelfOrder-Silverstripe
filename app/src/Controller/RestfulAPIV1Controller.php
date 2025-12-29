@@ -16,6 +16,7 @@ class RestfulAPIController extends Controller
 
     private static $allowed_actions = [
         'index',
+        'appVersion',
         'fcmToken',
         'login',
         'register',
@@ -48,6 +49,7 @@ class RestfulAPIController extends Controller
     ];
 
     private static $url_handlers = [
+        'appversion' => 'appVersion',
         'fcm-token' => 'fcmToken',
         'login' => 'login',
         'register' => 'register',
@@ -96,6 +98,9 @@ class RestfulAPIController extends Controller
             'message' => 'SilverStripe Self-Order API',
             'status' => 'operational',
             'endpoints' => [
+                'appversion' => [
+                    'GET /api' => 'Get API version and status',
+                ],
                 'authentication' => [
                     'POST /api/google-auth' => 'Firebase Google Auth',
                     'POST /api/login' => 'Login user',
@@ -155,6 +160,20 @@ class RestfulAPIController extends Controller
                     'POST /api/forgotpassword' => 'Forgot password'
                 ],
             ],
+        ]);
+    }
+
+    // ========== VERSION 1 API METHODS ==========
+    public function appVersion(HTTPRequest $request)
+    {
+        if (!$request->isGET()) {
+            return $this->jsonResponse(['error' => 'Only GET method allowed'], 405);
+        }
+
+        return $this->jsonResponse([
+            'version' => '1.5.0',
+            'status' => 'stable',
+            'release_date' => '2024-06-01',
         ]);
     }
 
